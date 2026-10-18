@@ -68,9 +68,11 @@ npm start
 
 Abre `http://localhost:8080`. El archivo `net.js` usará `http://localhost:8080` como valor predeterminado mientras abras el juego desde ese servidor.
 
-## Novedades de juego incluidas en esta versión (v8.26 – v8.28)
+## Novedades de juego incluidas en esta versión (v8.26 – v8.30)
 
 - **Ruta del Río (`ruta_rio.js`)**: si el puente de los Campos del Exilio cae, el Remanso del Río ya no vuelve a los Campos: lleva directo al Valle de la Corona y de ahí al trono. Las regiones y hogueras anteriores quedan selladas. En cooperativo el sellado lo aplica el anfitrión (que es quien guía el camino); el invitado solo sigue y su partida propia no se modifica.
 - **Animaciones de sueño (`suenos_anim.js`)**: cada sueño de las hogueras tiene su escena animada, local a cada jugador (no se sincroniza por red). Consola: `SueAnim.start('d1')` … `'d6'`.
 - Ambos se cargan en `index.html` justo después de `arrabales.js`, antes de `net.js`.
 - **El Cauce Hundido (`cauce.js`, v8.28)**: región nueva de la ruta alternativa entre el Remanso y el Valle de la Corona. Sala de compuertas con dos palancas, hoguera, cámara secreta y mini-jefe (El Guardacauces). Se carga antes de `ruta_rio.js`.
+- **La Cisterna Real (`cisterna.js`, v8.29)**: segundo tramo de la ruta alternativa (Cauce Hundido → Cisterna → Valle de la Corona). Dos puzzles en serie: el coro del agua (memoria sonora, 3 rondas) y cuatro válvulas en orden. Se carga después de `puzzles_v2.js` y `cauce.js`, antes de `ruta_rio.js`.
+- **Preludio de los sueños (v8.30, dentro de `suenos_anim.js`)**: antes de cada sueño, ~6 s con el protagonista sentado frente a la hoguera (bebe del frasco, se le cierran los ojos, cabecea) que se disuelve en el sueño. Un toque salta el preludio; el siguiente cierra todo.

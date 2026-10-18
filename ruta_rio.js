@@ -6,7 +6,7 @@
 //  · el menú "Viajar" solo ofrece hogueras de la ruta.
 // Cargar DESPUÉS de campos.js y castillo*.js.
 (function(){
-const RUTA=['ribera','cauce','valcor','entrada','gransalon','cocinas','capilla','biblioteca','trono','crater'];
+const RUTA=['ribera','cauce','cisterna','valcor','entrada','gransalon','cocinas','capilla','biblioteca','trono','crater'];
 const caido=()=>!!(S&&S.rv&&(S.rv['campos:muertos']||S.rv['campos:roto']));
 const idx=id=>RG.findIndex(r=>r.id===id);
 
@@ -29,6 +29,6 @@ const idx=id=>RG.findIndex(r=>r.id===id);
  if(caido()&&!inv&&rg&&rg.id==='valcor'&&!S.rv['ruta:valcor']){S.rv['ruta:valcor']=1;try{toast('El río no vuelve atrás. Delante, solo el castillo.')}catch(e){}}
 }}
 
-LNK.push(['ribera','cauce'],['cauce','valcor']);
+LNK.push(['ribera','cauce'],['cauce','cisterna'],['cisterna','valcor']);
 Object.assign(REGINFO,{valcor:(REGINFO.valcor||[]).concat(['Ruta del río: se llega desde el Remanso, sin vuelta atrás'])});
 })();
