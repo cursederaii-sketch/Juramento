@@ -1,7 +1,7 @@
 // ===== EL CAUCE HUNDIDO (v8.28): región de la ruta alternativa (Remanso del Río → Valle de la Corona) =====
 // El río no termina en el Remanso: sigue por galerías bajo la capital. Es el único camino cuando cae el puente.
 //   1) Sala de compuertas: un canal con un único puente y dos palancas, una en cada extremo. Ambas abren la reja del este.
-//   2) Antesala con hoguera, y detrás la arena del mini-jefe: El Guardacauces. Vencerlo abre la subida al Valle de la Corona.
+//   2) Antesala con hoguera, y detrás la arena del mini-jefe: El Guardacauces. Vencerlo abre la subida a la Cisterna Real.
 //   Secreto: un muro falso junto a la entrada esconde una cámara con un frasco.
 // Todo procedural, sin arte nuevo. Cargar DESPUÉS de campos.js y castillo*.js, ANTES de ruta_rio.js.
 (function(){
@@ -53,7 +53,7 @@ RG.push({id:'cauce',n:'El Cauce Hundido',act:'Lo que corre bajo la capital',th:'
  W.o('statue',58,10,1,1);W.o('statue',68,10,1,1);W.o('brazier',58,25,1,1);W.o('brazier',68,25,1,1);
  W.o('urn',68,18,1,1);W.note(68,18,'cauce5');
  W.item(62,24,{sou:900});
- W.portal('valcor',69,18,{to:'valcor',k:'Subir al Valle de la Corona',cond:()=>!!S.bk.guardacauces,lock:'El Guardacauces aún vigila la subida'});
+ W.portal('cisterna',69,18,{to:'cisterna',at:'cauce',k:'Subir a la Cisterna Real',sx:-22,sy:0,cond:()=>!!S.bk.guardacauces,lock:'El Guardacauces aún vigila la subida'});
  // --- secreto: muro falso junto a la entrada ---
  W.fwall(7,10,2,1,'sec');W.o('brazier',4,3,1,1);W.o('brazier',12,3,1,1);W.item(7,5,{f:1});W.item(10,6,{n:3});W.item(5,7,{sou:500});
  W.sc('rubble',14,3,3,68,32,{avoid:'fbw',seed:61,gap:2});
@@ -68,5 +68,5 @@ if(typeof WK!=='undefined'&&WK.caballero)WK.guardacauces=WK.caballero;
 PRES.guardacauces=()=>[['El Guardacauces','Nadie sube por aquí. Es lo único que me dijeron, y lo he repetido hasta que el agua lo aprendió. ¿Vienes del río? Entonces ya sabes lo que cuesta volver.']];
 CUT.guardacauces=()=>D('El Guardacauces','(Suelta la llave de la reja.) Sube, forastero. Antes subía gente; ahora solo baja el agua. Quizá lo que dejaste atrás también te esperaba arriba.');
 BEST.guardacauces=['El Guardacauces','Tajos amplios y embestidas. Cuando se enfurece llama a los Huecos que el cauce se llevó.','Guardia de las compuertas bajo la capital. Recibió la orden de que nadie subiera por el cauce y la cumplió incluso cuando ya no había quien intentara subir.','Sus embestidas cubren mucho terreno: esquiva de lado y castiga cuando termina. Los Huecos que invoca caen rápido; no los ignores.'];
-Object.assign(REGINFO,{cauce:['Galerías bajo la capital','Mini-jefe: El Guardacauces','Un canal, un puente y dos palancas · muro falso con frasco junto a la entrada','Hoguera en la entrada y antes de la arena','Salida al Valle de la Corona (sin vuelta a los Campos)']});
+Object.assign(REGINFO,{cauce:['Galerías bajo la capital','Mini-jefe: El Guardacauces','Un canal, un puente y dos palancas · muro falso con frasco junto a la entrada','Hoguera en la entrada y antes de la arena','Salida a la Cisterna Real (sin vuelta a los Campos)']});
 })();

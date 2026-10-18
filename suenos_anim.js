@@ -1,12 +1,12 @@
 // ===== ANIMACIONES DE SUEÑO (v8.27): una escena animada por cada sueño de las hogueras =====
 // Los sueños (d1..d6, definidos en cronica.js) se viven al descansar en una hoguera. Aquí se engancha bonfire(): si ese descanso
 // disparó un sueño nuevo, una animación procedural (sin arte externo, 320x180 pixelado, con ondulación de sueño) se superpone
-// al diálogo del sueño y desaparece sola (o al tocar / Enter / Esc). El diálogo y el descanso siguen exactamente igual debajo.
+// al diálogo del sueño (precedida de una escena del protagonista sentado frente a la hoguera que se duerme) y desaparece sola (o al tocar / Enter / Esc). El diálogo y el descanso siguen exactamente igual debajo.
 // Reutiliza el estilo #introAnim de style.css. Cargar DESPUÉS de cronica.js y lore.js. Consola: SueAnim.start('d1'..'d6').
 (function(){
 const W=320,H=180,TAU=Math.PI*2,rnd=Math.random,FADE=.9,DK=['d1','d2','d3','d4','d5','d6'];
 const C=(v,a,b)=>v<a?a:v>b?b:v,ez=t=>{t=C(t,0,1);return t*t*(3-2*t)},lp=(a,b,t)=>a+(b-a)*t;
-let ov,cv,cx,ob,ox,tbox,raf,run=0,st=0,last=0,cur=null,keyH,upH,cues=[],parts=[],vig;
+let ov,cv,cx,ob,ox,tbox,raf,run=0,st=0,gt=0,pp=1,last=0,cur=null,keyH,upH,cues=[],parts=[],vig;
 const R_=(c,x,y,w,h)=>{ox.fillStyle=c;ox.fillRect(Math.round(x),Math.round(y),w,h)};
 const poly=(c,p)=>{ox.fillStyle=c;ox.beginPath();ox.moveTo(p[0][0],p[0][1]);for(let i=1;i<p.length;i++)ox.lineTo(p[i][0],p[i][1]);ox.closePath();ox.fill()};
 const disc=(c,x,y,rx,ry)=>{ox.fillStyle=c;ox.beginPath();ox.ellipse(x,y,rx,ry==null?rx:ry,0,0,TAU);ox.fill()};
@@ -111,6 +111,80 @@ d6(){const t=st;
   const ky=94+Math.sin(t*1.8)*2;rad(mx,ky,22,'255,224,140',.5);disc('#e8c85a',mx-3,ky,3);R_('#e8c85a',mx-1,ky,10,2);R_('#e8c85a',mx+6,ky,2,4);R_('#e8c85a',mx+9,ky,2,3);
   motes(24,10,'255,220,150',4);ox.globalAlpha=1}}
 };
+
+// ---------- preludio: el protagonista sentado frente a la hoguera, que se duerme ----------
+const PRE=5.8,emb=[];
+SC.hoguera=function(){const t=st,fl=.5+.22*Math.sin(t*23)+.18*Math.sin(t*9.7+1)+.1*Math.sin(t*37),F={x:206,y:130},O={x:132,y:130};
+ ox.save();ox.translate(-180,-110);ox.scale(2,2);                                  // acercamiento 2x centrado entre el protagonista y la hoguera
+ bg('#04050c','#0b0e1c');
+ for(let i=0;i<64;i++){ox.globalAlpha=.2+.5*Math.abs(Math.sin(t*1.1+i*1.9));R_('#cfd8ff',90+(i*37)%160,50+(i*23)%58,1,1)}ox.globalAlpha=1;
+ disc('#d9def0',150,64,6);disc('#0b0e1c',153.5,62.5,5.6);                            // luna menguante
+ // arco derruido tras la hoguera
+ R_('#0a0d19',172,64,9,46);R_('#0a0d19',232,60,9,50);R_('#0a0d19',172,60,24,6);R_('#0a0d19',218,60,23,6);R_('#0a0d19',196,64,6,4);R_('#0a0d19',212,64,6,3);
+ // ruinas y árboles muertos (dos planos)
+ poly('#080a14',[[0,122],[0,92],[8,88],[12,66],[18,68],[22,90],[40,96],[52,78],[56,80],[60,98],[90,104],[120,100],[150,106],[188,98],[194,74],[198,74],[204,96],[240,102],[266,98],[272,82],[276,56],[284,56],[288,82],[298,100],[320,106],[320,122]]);
+ poly('#0a0d19',[[262,100],[264,66],[268,60],[274,64],[276,100]]);R_('#0a0d19',284,60,6,40);
+ ox.strokeStyle='#0a0c16';ox.lineWidth=2;ox.beginPath();ox.moveTo(104,114);ox.lineTo(106,84);ox.lineTo(100,70);ox.moveTo(106,84);ox.lineTo(114,74);ox.moveTo(105,96);ox.lineTo(96,88);ox.stroke();
+ for(let k=0;k<3;k++){ox.globalAlpha=.07+k*.03;R_('#9fb4d8',0,100+k*7+Math.sin(t*.6+k)*2,W,6)}ox.globalAlpha=1;
+ // suelo
+ const g=ox.createLinearGradient(0,118,0,H);g.addColorStop(0,'#10151b');g.addColorStop(1,'#050709');ox.fillStyle=g;ox.fillRect(0,118,W,H-118);
+ for(let i=0;i<46;i++){const gx=(i*29)%W,gy=122+(i*13)%52,sw=Math.sin(t*1.4+i)*1;R_('#16241f',gx+sw,gy,1,3);R_('#1d3028',gx+1+sw,gy+1,1,2)}
+ // luz de la hoguera sobre el entorno
+ rad(F.x,F.y-8,150,'255,120,40',.30+.10*fl);ox.save();ox.globalAlpha=.5+.2*fl;disc('rgba(255,140,60,.25)',F.x,F.y+2,70,14);ox.restore();
+ // sombra del protagonista, estirada hacia atrás y viva con el fuego
+ ox.globalAlpha=.55;disc('#020204',O.x-14-fl*2,O.y+2,26+fl*3,3.2);ox.globalAlpha=1;
+ // ---- hoguera: piedras traseras, cenizas, espada espiral, llamas, piedras delanteras ----
+ const stones=(front)=>{for(let i=0;i<14;i++){const a=i/14*TAU,sy=Math.sin(a);if((sy>0)!==front)continue;const sx=F.x+Math.cos(a)*17,syy=F.y+sy*6;R_(i%2?'#4a4452':'#3a3542',sx-2,syy-3,5,4);R_('#6e6880',sx-2,syy-3,5,1);R_('#221f2a',sx-2,syy,5,1)}};
+ stones(false);disc('#0a0707',F.x,F.y,13,4.6);disc('#3a1208',F.x,F.y-1,10,3.2);
+ for(let i=0;i<8;i++)R_(fl>.55&&i%2?'#ff8a30':'#c2491a',F.x-8+i*2.2,F.y-1+Math.sin(i*2)*1.2,2,1);
+ R_('#8e95a8',F.x-1,F.y-26,2,24);R_('#c9d0e0',F.x-1,F.y-26,1,24);R_('#6a6f80',F.x-6,F.y-21,12,2);R_('#c9a54a',F.x-1,F.y-29,2,3);       // espada de la hoguera
+ R_('#4a4a58',F.x-3,F.y-8,6,1);R_('#4a4a58',F.x-4,F.y-5,8,1);
+ const tongue=(bx,h,w,c,al,ph)=>{const sw=Math.sin(t*7+ph)*2.2*(h/18),hh=h*(.8+.4*Math.abs(Math.sin(t*11+ph*1.7)));ox.globalAlpha=al;ox.fillStyle=c;ox.beginPath();ox.moveTo(bx-w,F.y-1);ox.quadraticCurveTo(bx-w*.5+sw*.3,F.y-hh*.55,bx+sw,F.y-hh);ox.quadraticCurveTo(bx+w*.5+sw*.3,F.y-hh*.55,bx+w,F.y-1);ox.closePath();ox.fill();ox.globalAlpha=1};
+ [[-8,15,3.4,0],[-4,21,4.2,1.3],[0,25,4.6,2.6],[4,20,4,3.9],[8,14,3.2,5.1],[-1,18,3,.7],[3,16,2.8,2.2]].forEach(([dx,h,w,ph])=>tongue(F.x+dx,h*(1+.1*fl),w,'#e0481a',.92,ph));
+ [[-6,12,2.6,.5],[-1,18,3.2,1.9],[4,13,2.6,3.3],[0,15,2.4,4.4]].forEach(([dx,h,w,ph])=>tongue(F.x+dx,h*(1+.1*fl),w,'#ff9a2e',.95,ph));
+ [[-2,9,1.8,.9],[2,10,1.8,2.7],[0,12,1.6,4.1]].forEach(([dx,h,w,ph])=>tongue(F.x+dx,h,w,'#ffe9a0',.95,ph));
+ stones(true);
+ rad(F.x,F.y-14,56,'255,170,70',.35+.12*fl);
+ if(rnd()<dt_*26)emb.push({x:F.x+(rnd()-.5)*12,y:F.y-10,vx:(rnd()-.5)*10,vy:-(14+rnd()*22),l:0,m:1.4+rnd()*1.4});
+ for(const e of emb){e.l+=dt_;e.x+=(e.vx+Math.sin(e.l*4+e.m)*5)*dt_;e.y+=e.vy*dt_;const a=C(1-e.l/e.m,0,1);ox.globalAlpha=a;R_(a>.5?'#ffd27a':'#ff7a2a',e.x,e.y,1,1);ox.globalAlpha=1}
+ for(let i=emb.length-1;i>=0;i--)if(emb[i].l>emb[i].m)emb.splice(i,1);
+ // ---- espada del protagonista, en el suelo a su lado ----
+ R_('#6a7080',O.x-30,O.y+4,24,2);R_('#aab2c4',O.x-30,O.y+4,24,1);R_('#4a3a22',O.x-9,O.y+1,2,8);R_('#c9a54a',O.x-9,O.y+3,2,1);R_('#3a2a1a',O.x-6,O.y+4,5,2);
+ // ---- protagonista (sentado, mirando a la hoguera) ----
+ const sleepy=ez((t-1.9)/3.2),nod=-2.6*Math.exp(-Math.pow((t-3.0)*5,2))-1.8*Math.exp(-Math.pow((t-4.35)*6,2)),bow=sleepy*4.5+nod,lean=sleepy*3,br=Math.sin(t*1.9)*.5;
+ const sip=ez((t-.35)/.5)*(1-ez((t-1.25)/.5)),A0='#26264a',A1='#3c3c72',A2='#14142c',rim=.5+.35*fl,RIM='rgba(255,160,70,'+rim+')';
+ const sh={x:O.x+1+lean,y:O.y-27+br+lean*.4};                                   // hombro
+ poly('#1a2a5a',[[sh.x-4,sh.y+1],[O.x-22,O.y+1],[O.x+1,O.y+1],[O.x-4,sh.y+10]]);  // capa caída hacia atrás
+ R_('#4aa8c8',O.x-22,O.y,22,1);ox.globalAlpha=.5;R_('#2a4a8a',O.x-16,sh.y+10,10,Math.max(1,O.y-sh.y-11));ox.globalAlpha=1;
+ poly(A2,[[O.x+4,O.y-8],[O.x+17,O.y-17],[O.x+20,O.y-12],[O.x+8,O.y-3]]);       // pierna de atrás, doblada
+ poly('#10101e',[[O.x+17,O.y-12],[O.x+22,O.y-3],[O.x+27,O.y-1],[O.x+27,O.y+1],[O.x+14,O.y+1],[O.x+16,O.y-6]]);
+ poly(A0,[[O.x-7,O.y-4],[O.x+5,O.y-5],[sh.x+4,sh.y+1],[sh.x-7,sh.y]]);        // torso
+ poly(A1,[[O.x-4,O.y-6],[O.x+4,O.y-7],[sh.x+3,sh.y+3],[sh.x-3,sh.y+2]]);R_(A2,O.x-7,O.y-9,12,2);R_('#3a2a1a',O.x-7,O.y-9,12,2);R_('#c9a54a',O.x-2,O.y-9,3,2);
+ const em=.55+.45*Math.sin(t*2.4);rad(sh.x+2,sh.y+7,10,'125,249,255',.45*em);R_('#7df9ff',sh.x+1,sh.y+6,2,3);R_('#7df9ff',sh.x,sh.y+7,4,1);   // emblema
+ poly(A1,[[O.x+3,O.y-8],[O.x+16,O.y-20],[O.x+20,O.y-16],[O.x+8,O.y-4]]);       // muslo
+ poly(A0,[[O.x+15,O.y-20],[O.x+21,O.y-16],[O.x+20,O.y-4],[O.x+15,O.y-5]]);     // espinilla
+ R_(A2,O.x+17,O.y-17,3,2);R_('#10101e',O.x+15,O.y-4,11,4);R_('#10101e',O.x+23,O.y-6,4,3);R_(RIM,O.x+25,O.y-5,1,3);R_(RIM,O.x+19,O.y-16,1,10);R_(RIM,O.x+16,O.y-21,5,1);
+ ox.globalAlpha=.25;R_('#7a7ac8',O.x+4,O.y-14,9,1);ox.globalAlpha=1;
+ // brazo cercano: del hombro al codo y a la mano (sorbo del frasco, luego descanso sobre la rodilla)
+ const hd={x:lp(O.x+17,sh.x+7,sip),y:lp(O.y-18,sh.y-6+bow*.6,sip)},el={x:lp(O.x+7,sh.x+9,sip*.7)+0,y:lp(O.y-14,sh.y+10,sip*.5)};
+ ox.strokeStyle=A1;ox.lineWidth=3.4;ox.lineCap='round';ox.beginPath();ox.moveTo(sh.x+1,sh.y+3);ox.lineTo(el.x,el.y);ox.stroke();
+ ox.strokeStyle=A0;ox.lineWidth=3;ox.beginPath();ox.moveTo(el.x,el.y);ox.lineTo(hd.x,hd.y);ox.stroke();ox.lineCap='butt';
+ R_('#10101e',hd.x-2,hd.y-2,4,4);R_(RIM,hd.x+1,hd.y-2,1,3);
+ if(sip>.02||t<1.9){const fx2=hd.x+2,fy2=hd.y-4-sip*1;R_('#3a2a14',fx2-1,fy2-3,3,2);poly('#d8e8f0',[[fx2-3,fy2-1],[fx2+3,fy2-1],[fx2+2,fy2+5],[fx2-2,fy2+5]]);ox.globalAlpha=.9;R_('#ff9a3c',fx2-2,fy2+1+sip*2,4,3);ox.globalAlpha=1;rad(fx2,fy2+2,10,'255,160,60',.25)}
+ // hombrera
+ disc(A1,sh.x+1,sh.y+1,4.6,3.4);R_('#6a6ab0',sh.x-2,sh.y-1,5,1);R_(RIM,sh.x+4,sh.y,1,3);
+ // cabeza y capucha: se hunde despacio y da cabezadas
+ const hx=sh.x+2+bow*.5,hy=sh.y-8+bow;
+ poly('#0f0f22',[[hx-7,hy+7],[hx-9,hy+1],[hx-4,hy-8],[hx+4,hy-8],[hx+8,hy-2],[hx+7,hy+5],[hx+2,hy+8]]);                     // capucha
+ poly('#1c1c38',[[hx-5,hy+6],[hx-6,hy],[hx-2,hy-7],[hx+4,hy-7],[hx+7,hy-2],[hx+5,hy+4]]);
+ poly('#2c2c58',[[hx-6,hy-2],[hx-3,hy-7],[hx+3,hy-7],[hx+1,hy-4]]);
+ poly('#040408',[[hx+1,hy-4],[hx+7,hy-2],[hx+7,hy+5],[hx+2,hy+6]]);                                                          // interior de la capucha
+ const eo=1-ez((t-2.2)/2.0),ey=hy+1;ox.globalAlpha=.25+.75*eo;R_('#7df9ff',hx+3,ey,2,Math.max(1,Math.round(2*eo)));R_('#7df9ff',hx+6,ey,1,Math.max(1,Math.round(2*eo)));ox.globalAlpha=1;rad(hx+4,ey,10,'125,249,255',.3*eo);
+ R_(RIM,hx+7,hy-2,1,7);R_(RIM,hx+1,hy-8,6,1);
+ ox.restore();
+ // desvanecimiento hacia el sueño (los últimos 1,3 s)
+ const k=ez((t-(PRE-1.3))/1.3);if(k>0){rad(W/2,H/2-10,220,'170,210,255',k*.9)}
+};
 // ---------- datos de cada sueño: título, duración y sonidos ----------
 const rep=(a,b,s,f)=>{const o=[];for(let t=a;t<b;t+=s)o.push([t,f]);return o};
 const sf=(f,d,ty,v,f2)=>()=>{try{sfx(f,d,ty,v,f2)}catch(e){}};
@@ -129,25 +203,33 @@ function mkDom(){
  document.body.appendChild(ov);cv=ov.querySelector('canvas');cx=cv.getContext('2d');cx.imageSmoothingEnabled=false;tbox=ov.querySelector('.itx p');
  if(!ob){ob=document.createElement('canvas');ob.width=W;ob.height=H}ox=ob.getContext('2d');
  vig=cx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,W*.62);vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,0,.75)');
- const skip=()=>{if(st>1.2)finish()};
+ const skip=()=>{if(gt<1.2)return;if(gt<PRE-.5)gt=PRE-.5;else finish()};
  ov.addEventListener('pointerdown',skip);ov.querySelector('.isk').addEventListener('click',e=>{e.stopPropagation();finish()});
  keyH=e=>{e.stopPropagation();if(e.key==='Escape'||e.key==='Enter'||e.key===' '||e.key==='e'||e.key==='E'){e.preventDefault();if(!e.repeat)skip()}};
  upH=e=>{if(run)e.stopPropagation()};addEventListener('keydown',keyH,true);addEventListener('keyup',upH,true)}
 function finish(){if(!run)return;run=0;cancelAnimationFrame(raf);removeEventListener('keydown',keyH,true);removeEventListener('keyup',upH,true);
  const o=ov;o.style.transition='opacity .6s';o.style.opacity=0;setTimeout(()=>{o.remove()},650);try{relAll()}catch(e){}}
 function frame(ts){
- if(!run)return;raf=requestAnimationFrame(frame);dt_=Math.min(.05,(ts-last)/1000||.016);last=ts;st+=dt_;
- const d=cur.d;if(st>=d){finish();return}
- const a=C(Math.min(st/FADE,(d-st)/FADE),0,1);
- while(cues.length&&cues[0][0]<=st){cues.shift()[1]()}
- ox.globalAlpha=1;ox.fillStyle='#000';ox.fillRect(0,0,W,H);ox.save();SC[cur.id]();ox.restore();ox.globalAlpha=1;
+ if(!run)return;raf=requestAnimationFrame(frame);dt_=Math.max(0,Math.min(.05,(ts-last)/1000||.016));last=ts;gt+=dt_;
+ const d=PRE+cur.d;if(gt>=d){finish();return}
+ const inPre=gt<PRE;st=inPre?gt:gt-PRE;if(inPre!==pp){pp=inPre;parts=[];tbox.textContent=inPre?'Descansas junto a la hoguera…':cur.n}
+ const a=C(Math.min(gt/FADE,(d-gt)/FADE),0,1);
+ while(cues.length&&cues[0][0]<=gt){cues.shift()[1]()}
+ ox.globalAlpha=1;ox.fillStyle='#000';ox.fillRect(0,0,W,H);ox.save();SC[inPre?'hoguera':cur.id]();ox.restore();ox.globalAlpha=1;
  cx.globalAlpha=1;cx.fillStyle='#000';cx.fillRect(0,0,W,H);cx.globalAlpha=a;
- const amp=1.3*Math.min(1,st/1.5,(d-st)/1.5)+.3;for(let y=0;y<H;y+=4)cx.drawImage(ob,0,y,W,4,Math.sin(y*.09+st*1.7)*amp,y,W,4);
+ // ondulación de sueño: leve al dormirse, fuerte en el cruce hacia el sueño, y se calma al entrar en él
+ const wash=gt<PRE?ez((gt-(PRE-1.3))/1.3):1-ez((gt-PRE)/1.2),amp=(gt<PRE?.5+1.2*ez((gt-1.8)/3):1.3*Math.min(1,st/1.5,(d-gt)/1.5)+.3)+5*wash;
+ for(let y=0;y<H;y+=4)cx.drawImage(ob,0,y,W,4,Math.sin(y*.09+gt*1.7)*amp,y,W,4);
+ if(wash>0){cx.fillStyle='rgba(185,215,255,'+(wash*.88)+')';cx.fillRect(0,0,W,H)}
  cx.fillStyle=vig;cx.fillRect(0,0,W,H);cx.globalAlpha=1;
- tbox.style.opacity=C(Math.min((st-.7)/1,(d-st-.4)/1,1),0,1)*(st<4.2||d-st<1.4?1:.0)}
+ tbox.style.opacity=inPre?C(Math.min((gt-.5)/1,(PRE-1.5-gt)/.8),0,1):C(Math.min((st-.7)/1,(3.8-st)/.8,(cur.d-st-.4)/1),0,1)}
 function start(id){
- if(run||!SC[id])return;cur=Object.assign({id:id},DR[id]);run=1;st=0;parts=[];cues=cur.cues.slice().sort((p,q)=>p[0]-q[0]);
- mkDom();tbox.textContent=cur.n;tbox.style.opacity=0;last=performance.now();raf=requestAnimationFrame(frame)}
+ if(run||!SC[id])return;cur=Object.assign({id:id},DR[id]);run=1;st=0;gt=0;pp=true;parts=[];emb.length=0;
+ // sonidos: crepitar y bebida del preludio, luego los de cada sueño desplazados al final del preludio
+ const pre=[[0,sf(60,PRE,'triangle',.02,56)],[.55,sf(230,.3,'sine',.04,150)],[.95,sf(210,.25,'sine',.04,140)],[3.0,sf(140,.14,'sine',.04,90)],[4.35,sf(130,.14,'sine',.04,85)],[PRE-1.2,sf(440,1.5,'sine',.04,990)]];
+ for(let t=.2;t<PRE-1.4;t+=.33)pre.push([t,sf(900+((t*977)%1)*1500,.03,'square',.008)]);
+ cues=pre.concat(cur.cues.map(([t,f])=>[t+PRE,f])).sort((p,q)=>p[0]-q[0]);
+ mkDom();tbox.textContent='Descansas junto a la hoguera…';tbox.style.opacity=0;last=performance.now();raf=requestAnimationFrame(frame)}
 // ---------- enganche: al descansar, si ese descanso trajo un sueño nuevo, se muestra su animación ----------
 {const f=bonfire;bonfire=function(x){const b=Object.assign({},NX());const r=f.apply(this,arguments);
  try{const id=DK.find(k=>NX()[k]&&!b[k]);if(id)start(id)}catch(e){}return r}}
