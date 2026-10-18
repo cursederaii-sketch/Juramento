@@ -2,7 +2,7 @@
 // Carga DESPUÉS de render.js (y de todo lo que redefina weapon). render.js elige la forma con WSHAPE[S.weapon].
 // Las armas básicas (corta, larga) siguen siendo la espada de siempre.
 (function(){
-const WSHAPE={lanza:'w_lanza',mandoble:'w_mandoble',caballero:'w_caballero',hoz:'w_hoz',estoque:'w_estoque',cuchilla:'w_cuchilla',cirial:'w_cirial',pluma:'w_pluma',mandibula:'w_mandibula',pico:'w_pico'};
+const WSHAPE={lanza:'w_lanza',mandoble:'w_mandoble',caballero:'w_caballero',hoz:'w_hoz',estoque:'w_estoque',cuchilla:'w_cuchilla',cirial:'w_cirial',pluma:'w_pluma',mandibula:'w_mandibula',pico:'w_pico',arpon:'w_arpon'};
 window.WSHAPE=WSHAPE;
 const w0=weapon;
 weapon=function(k,ox,oy,a,len,o){
@@ -21,6 +21,8 @@ weapon=function(k,ox,oy,a,len,o){
  else if(k==='w_cirial'){shaft('#8a6a3a');const p=pp(len+2,0);disc(g,Math.round(p[0]),Math.round(p[1]),4,'#c9a54a');disc(g,Math.round(p[0]),Math.round(p[1]),2,'#ffe9a0');L(len-2,-3,len-2,3,'#c9a54a',1);glow(p[0],p[1],14,'255,220,120',.35)}
  else if(k==='w_pluma'){L(-3,0,1,0,'#5a4630',1);L(1,-2,1,2,'#c9a54a',1);L(2,0,2+len,0,'#dfe6f2',1);for(let i=0;i<5;i++){const t=4+i*len/6;L(t,0,t+3,-3,'#aebad0',1);L(t,0,t+3,3,'#aebad0',1)}L(2+len,0,5+len,0,'#ffffff',1)}
  else if(k==='w_mandibula'){shaft('#3a2a24');for(const sg of[-1,1]){let px=null;for(let i=0;i<=6;i++){const u=i/6,p=pp(len-4+u*9,sg*(7-u*6.5)+sg*Math.sin(u*3)*0);if(px)pline(g,px[0],px[1],p[0],p[1],'#c8a060',2);px=p}}glow(...pp(len+2,0),9,'255,190,90',.2)}
+ else if(k==='w_arpon'){shaft('#2a2430');L(-4,0,-1,0,'#5a4630',2);for(let i=0;i<3;i++){const t=2+i*3;L(t,-2,t,2,'#8a7a5a',1)}L(len-3,0,len+4,0,'#1a1a24',3);L(len+4,0,len+10,0,'#cfd6e8',2);L(len+4,-.5,len+10,-.5,'#ffffff',1);
+  for(const sg of[-1,1]){L(len+2,sg*1,len-1,sg*6,'#9aa0b4',2);L(len-1,sg*6,len-3,sg*5,'#cfd6e8',1)}glow(...pp(len+6,0),11,'170,120,255',.3)}
  else if(k==='w_pico'){shaft('#6a4a2e');L(len-3,-8,len-3,8,'#8a8a98',3);L(len-3,-8,len+2,-10,'#c0c0cc',2);L(len-3,8,len+2,10,'#c0c0cc',2);L(len-4,-8,len-4,8,'#d8d8e4',1)}
 };
 // Brasa: el filo del arma arde con un brillo rojo (aviso visual de la reliquia)
