@@ -51,7 +51,7 @@ RG.push({id:'cauce',n:'El Cauce Hundido',act:'Lo que corre bajo la capital',th:'
  // --- arena: la reja se cierra al entrar y se abre al vencerlo ---
  W.setArena({x:56,y:9,w:14,h:18},[[55,17,1,3]],64,18);
  W.o('statue',58,10,1,1);W.o('statue',68,10,1,1);W.o('brazier',58,25,1,1);W.o('brazier',68,25,1,1);
- W.o('urn',68,18,1,1);W.note(68,18,'cauce5');
+ W.o('urn',67,13,1,1);W.note(67,13,'cauce5');
  W.item(62,24,{sou:900});
  W.portal('cisterna',69,18,{to:'cisterna',at:'cauce',k:'Subir a la Cisterna Real',sx:-22,sy:0,cond:()=>!!S.bk.guardacauces,lock:'El Guardacauces aún vigila la subida'});
  // --- secreto: muro falso junto a la entrada ---
