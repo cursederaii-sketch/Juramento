@@ -1,4 +1,4 @@
-// ===== LA TRAVESÍA DE LA GAVIOTA (v8.32): misión secundaria en el Puerto de Valdorra =====
+// ===== LA TRAVESÍA DE LA GAVIOTA (v8.34): misión secundaria en el Puerto de Valdorra =====
 // Tomás, el marinero, ofrece subir al barco que volvió vacío la noche de la ceniza. A bordo viajan cuatro señores y un timonel mudo.
 // Cada vez que hablas con un señor nuevo, el mar y el cielo se vuelven más raros (la luz cambia, caen cenizas, los pasajeros
 // se vuelven translúcidos). Al hablar con el cuarto, el barco se detiene... y aparece el Kraken, que parte la cubierta.
@@ -90,14 +90,14 @@ RG.push({id:'barco',n:'La Gaviota',act:'Una travesía que no figura en ningún r
  W.note(13,12,'trav1');W.note(26,26,'trav2');W.note(30,13,'trav3');
  // --- pasajeros (desaparecen cuando se rompe el barco) ---
  const here=()=>!S.rv['trav:roto'];
- W.npc('ramiro',14,16,{when:here});W.npc('ilaria',20,23,{when:here});W.npc('baldric',31,16,{when:here});W.npc('teodoro',41,22,{when:here});W.npc('timonel',49,19,{when:here});
+ W.npc('ramiro',14,16,{when:here});W.npc('ilaria',20,23,{when:here});W.npc('baldric',31,16,{when:here});W.npc('teodoro',41,22,{when:here});W.npc('timonel',11,19,{when:here});
  // --- cubierta rota (tras el golpe del Kraken): agujeros, palo mayor caído y arena del jefe ---
  W.brk=function(){
   this.g('w',18,14,4,3);this.g('w',34,23,4,3);this.g('w',41,13,3,3);this.g('w',11,24,3,3);
   this.clr(24,19,1,1);this.o('rubble',24,19,1,1);
   [[20,20],[30,18],[36,19],[27,22],[14,17]].forEach(([x,y])=>this.o('rubble',x,y,1,1));
   if(!S.bk.kraken&&!this.arena)this.setArena({x:14,y:12,w:34,h:15},[],33,19)};
- G.krk=0;envSet(envFor());
+ G.krk=0;envSet(envFor());try{if(window.TRVMAR&&TRVMAR.reset)TRVMAR.reset()}catch(e){console.error(e)}
  // si ya hablaste con los cuatro y el golpe no llegó a producirse (muerte, recarga), el barco lo reanuda
  if(stg()>=4&&!S.rv['trav:roto'])setTimeout(()=>{if(rg&&rg.id==='barco')krakenEvent()},2500);
 }});
@@ -107,6 +107,13 @@ LAY.barco=[8,420];LNK.push(['puerto','barco',1]);
 // ---------- evento: el Kraken rompe el barco ----------
 function krakenEvent(){
  if(!rg||rg.id!=='barco'||S.rv['trav:roto']||G.krk)return;G.krk=1;
+ // la cinemática larga (sombra, tentáculos gigantes, cubierta que estalla, Kraken que emerge) vive en travesia_mar.js
+ if(window.TRVMAR&&TRVMAR.cine){
+  TRVMAR.cine({envSet,
+   breakShip:()=>{S.rv['trav:roto']=1;W.applyDyn();W.bake();save()},
+   fight:()=>{G.krk=0;if(rg&&rg.id==='barco'&&W.arena&&!S.bk.kraken&&!G.bossOn&&P&&P.s!=='dead')startBoss();save()}});
+  return}
+ // respaldo si travesia_mar.js no está cargado
  envSet(4);toast('El barco se detiene. Nada se mueve.');G.shake=3;try{sfx(60,1.2,'sawtooth',.08,30)}catch(e){}
  setTimeout(()=>{if(!rg||rg.id!=='barco'){G.krk=0;return}envSet(5);toast('Algo enorme roza la quilla...');G.shake=6;try{sfx(48,1.2,'sawtooth',.1,24)}catch(e){}},1800);
  setTimeout(()=>{
@@ -117,8 +124,10 @@ function krakenEvent(){
   save()},3800)}
 
 // ---------- jefe: El Kraken ----------
-BS.kraken={n:'El Kraken',mini:1,hp:560,w:34,h:30,c:'#3d3070',tr:'#ffd24a',sp:26,so:3500,fr:5,dm:1.3,wl:30,drop:{w:'arpon'},
- ph:[{a:['smash','bsl'],s:1},{a:['smash','cinder','bov'],s:1.25,adds:2,addT:'hollow',msg:'Los ahogados trepan por la borda'},{a:['bov','smash','cinder','bsl','smash'],s:1.5,hold:.25,rocks:1,msg:'El mar entero se levanta'}]};
+// ataques propios: el alcance acompaña al tamaño del Kraken (el cuerpo se dibuja al doble)
+Object.assign(ATK,{krsmash:Object.assign({},ATK.smash,{rng:76,d:28,w:1}),krbsl:Object.assign({},ATK.bsl,{rng:94,d:24}),krbov:Object.assign({},ATK.bov,{rng:68,d:32})});
+BS.kraken={n:'El Kraken',mini:1,hp:560,w:64,h:64,c:'#3d3070',tr:'#ffd24a',sp:26,so:3500,fr:5,dm:1.3,wl:30,drop:{w:'arpon'},
+ ph:[{a:['krsmash','krbsl'],s:1},{a:['krsmash','cinder','krbov'],s:1.25,adds:2,addT:'hollow',msg:'Los ahogados trepan por la borda'},{a:['krbov','krsmash','cinder','krbsl','krsmash'],s:1.5,hold:.25,rocks:1,msg:'El mar entero se levanta'}]};
 KITS.kraken=Object.assign({},KITS.caballero,{A:['#3d3070','#6f5cb0','#1f1840'],hc:['#3d3070','#6f5cb0','#1f1840'],eye:'#ffd24a',wp:'none'});
 WK.kraken=['none',0];
 PRES.kraken=()=>[['El Kraken','(No habla. El agua, sí: sube por los tablones y repite los nombres de los doce pasajeros, uno tras otro, sin prisa.)']];
@@ -126,13 +135,19 @@ CUT.kraken=()=>D('La Gaviota','(El agua se calma. El casco, entero otra vez, cru
 BEST.kraken=['El Kraken','Azota con sus tentáculos en abanico y escupe tinta que quema. Con la ira llama a los ahogados y alza el mar contra la cubierta.','No es un monstruo sino un hambre: se alimenta de barcos que no saben que se han hundido. Los pasajeros de La Gaviota lo esperaban cada noche sin recordarlo.','Su azote cubre mucho frente: rodéalo y castiga cuando recoge los tentáculos. Los ahogados caen rápido; no los ignores.'];
 
 // cuerpo propio (dibujado, sin imagen): manto, ojos que miran al jugador y ocho tentáculos que reaccionan a la pose
-function drawKraken(x,y,fx,fy,pose,fr_,o){
- o=o||{};const t=(typeof TM!=='undefined'?TM:0),F=!!o.flash,sd=fx<0?-1:1;
+// v8.37 (optimización): el cuerpo se dibuja UNA vez por pose/fase/mirada en un canvas pequeño y luego se estampa con drawImage
+// (antes eran miles de fillRect por fotograma). La animación va a 8 fps en ciclos de 12 cuadros, que en pixel art queda igual.
+const KRC=new Map(),KOX=60,KOY=54;
+function krSprite(pose,sd,F,e1,e2,e3,ph){
+ const key=pose+'|'+sd+'|'+(F?1:0)+'|'+e1+'|'+e2+'|'+e3+'|'+ph;let c=KRC.get(key);if(c)return c;
+ if(KRC.size>300)KRC.clear();
+ c=document.createElement('canvas');c.width=120;c.height=70;const x=c.getContext('2d');
+ const f=(a,b,w,h,col)=>{x.fillStyle=col;x.fillRect(a,b,w,h)};
  const C=F?{b:'#ffffff',h:'#ffffff',d:'#dcdcea',s:'#ffffff',e:'#ffffff'}:{b:'#3d3070',h:'#6f5cb0',d:'#1f1840',s:'#e0a4c8',e:'#ffd24a'};
- g.save();if(o.al!=null)g.globalAlpha=o.al;g.translate(Math.round(x),Math.round(y-2));if(o.rot)g.rotate(o.rot);
- const bob=Math.sin(t*3)*1.2;
+ x.translate(KOX,KOY);
+ const bob=Math.sin(ph/12*6.283)*1.2,kk=pose==='stg'?5:1;
  for(let i=0;i<8;i++){
-  const a=(i/7-.5)*2,front=a*sd>.15,bx=a*10,by=-12,wv=Math.sin(t*(pose==='stg'?30:4)+i*1.7);
+  const a=(i/7-.5)*2,front=a*sd>.15,bx=a*10,by=-12,wv=Math.sin(ph/12*6.283*kk+i*1.7);
   let ex=a*34,ey=3+(1-Math.abs(a))*2;
   if(front&&pose==='wind'){ex=a*10+sd*6;ey=-40+wv*2}
   else if(front&&pose==='act'){ex=sd*(36+Math.abs(a)*10);ey=7}
@@ -140,12 +155,20 @@ function drawKraken(x,y,fx,fy,pose,fr_,o){
   let px=bx,py=by;
   for(let s=1;s<=6;s++){
    const u=s/6,nx=bx+(ex-bx)*u+wv*3*u*(1-u)*2,ny=by+(ey-by)*u-Math.sin(u*Math.PI)*((front&&pose==='wind')?0:7);
-   pline(g,px,py,nx,ny,i%2?C.b:C.h,Math.max(1,Math.round(5-u*3.5)));
-   if(u>.3&&u<.9&&!F)fr(nx,ny+1,1,1,C.s);
+   pline(x,px,py,nx,ny,i%2?C.b:C.h,Math.max(1,Math.round(5-u*3.5)));
+   if(u>.3&&u<.9&&!F)f(Math.round(nx),Math.round(ny)+1,1,1,C.s);
    px=nx;py=ny}}
- disc(g,0,-14+bob,12,C.d);disc(g,0,-26+bob,14,C.b);disc(g,-4,-31+bob,8,C.h);
- if(!F){fr(-9,-24+bob,2,2,C.d);fr(8,-27+bob,2,2,C.d);fr(2,-33+bob,2,1,C.d)}
- for(const e of[-6,6]){disc(g,e,-20+bob,3,'#fff');if(!F){disc(g,e+Math.round(fx*1.3),-20+bob+Math.round(fy*1.1),2,C.e);fr(e+Math.round(fx*1.6),-21+bob+Math.round(fy*1.1),1,2,'#000')}}
+ disc(x,0,-14+bob,12,C.d);disc(x,0,-26+bob,14,C.b);disc(x,-4,-31+bob,8,C.h);
+ if(!F){f(-9,-24+bob,2,2,C.d);f(8,-27+bob,2,2,C.d);f(2,-33+bob,2,1,C.d)}
+ for(const e of[-6,6]){disc(x,e,-20+bob,3,'#fff');if(!F){disc(x,e+e1,-20+bob+e3,2,C.e);f(e+e2,-21+bob+e3,1,2,'#000')}}
+ KRC.set(key,c);return c}
+function drawKraken(x,y,fx,fy,pose,fr_,o){
+ o=o||{};const t=(typeof TM!=='undefined'?TM:0),F=!!o.flash,sd=fx<0?-1:1;
+ const K=2,rs=o.rise==null?1:Math.max(0,Math.min(1,o.rise));
+ const spr=krSprite(pose||'',sd,F,Math.round(fx*1.3),Math.round(fx*1.6),Math.round(fy*1.1),((t*8)|0)%12);
+ g.save();if(o.al!=null)g.globalAlpha=o.al;g.translate(Math.round(x),Math.round(y-2));
+ if(rs<1){g.beginPath();g.rect(-320,-420,640,424);g.clip();g.translate(0,Math.round((1-rs)*(1-rs)*86*K))} // sube desde el agua: lo de abajo queda oculto
+ if(o.rot)g.rotate(o.rot);g.scale(K,K);g.drawImage(spr,-KOX,-KOY);
  g.restore();g.globalAlpha=1}
 {const b0=body;body=function(id,x,y,fx,fy,pose,fr_,o){if(id!=='kraken')return b0.apply(this,arguments);drawKraken(x,y,fx,fy,pose,fr_,o)}}
 
@@ -154,6 +177,7 @@ WP.arpon={n:'Arpón del Kraken',d:'Alcance enorme y golpes lentos: mantiene a ra
  lore:['Un arpón de hierro negro, con la cuerda aún enrollada al mango. La punta tiene dos garfios y ninguna herrumbre.','Los garfios retienen un resto de tinta morada que no se seca. Si lo acercas a la nariz huele a mar de noche.','Dentro del asta, grabados uno por uno, doce nombres. Los once primeros están tachados. El último dice solo: «Todavía».']};
 // misión completada: se registra una vez, el mar vuelve a calmarse
 {const b0=bossDown;bossDown=function(e){const r=b0.apply(this,arguments);
+ if(e&&e.id==='kraken'){try{if(window.TRVMAR&&TRVMAR.down)TRVMAR.down()}catch(er){console.error(er)}}
  if(e&&e.id==='kraken'&&!S.rv['trav:done']){S.rv['trav:done']=1;doneQ();S.frag+=2;envSet(6);toast('Misión completada: La travesía de la Gaviota')}
  return r}}
 
@@ -170,5 +194,6 @@ WP.arpon={n:'Arpón del Kraken',d:'Alcance enorme y golpes lentos: mantiene a ra
   [['Subiré a bordo',()=>{S.rv['trav:ok']=1;toast('Misión secundaria: La travesía de la Gaviota');return D('Tomás, marinero','El muelle del oeste, al fondo. Habla con todos los señores antes de que se haga tarde. Y no mires hacia abajo.')}],['Ahora no']]);
  return n}}
 
+window.TRV={stg,envSet,drawKraken};
 Object.assign(REGINFO,{barco:['Un barco que volvió vacío y que zarpa solo','Misión secundaria: habla con los cuatro señores','El mar cambia con cada conversación','Hoguera en la popa','Jefe: El Kraken (Arpón del Kraken)']});
 })();

@@ -54,11 +54,6 @@ function startGame(){if(_sg)return;const er=$('nerr');
  catch(e){_sg=0;console.error(e);if(er)er.textContent='Error al empezar: '+(e&&e.message||e)}}
 function tPlay(){slotPick('play')}
 const m_off=()=>$('menu').classList.remove('tt');
-// vídeo de fondo del título: solo se reproduce mientras el título está visible
-(function(){const v=$('tv');if(!v)return;v.muted=true;const go=()=>{const p=v.play();if(p&&p.catch)p.catch(()=>{})};
- const sync=()=>{if($('menu').classList.contains('tt')&&$('menu').style.display!=='none')go();else v.pause()};
- new MutationObserver(sync).observe($('menu'),{attributes:true,attributeFilter:['class','style']});
- addEventListener('pointerdown',()=>{if(v.paused)sync()},{passive:true});v.addEventListener('canplay',sync);sync()})();
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if((k==='escape'||k==='p')&&!e.repeat){if(G.mode==='play')openPause();else if(G.mode==='menu'&&$('menu').querySelector('h1')&&$('menu').querySelector('h1').textContent==='Pausa')closeM()}});
 $('pause').addEventListener('click',openPause);
 $('pause').addEventListener('touchstart',e=>e.stopPropagation());

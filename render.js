@@ -170,7 +170,6 @@ function hud(){const p=P;
  if(b){tx(b.b.n,GW/2,GH-23,'#f0e6ff','center',8);bar(60,GH-17,264,5,b.hp/b.mhp,'#c0243c','#5a0e1e');for(const s of[-1,1]){fr(GW/2+s*136-3,GH-20,6,10,'#c9a54a');fr(GW/2+s*136-1,GH-19,2,8,'#0a0610')}}
  if(G.banner){const a=Math.min(1,G.banner.l);g.globalAlpha=a;fr(40,GH/2-43,GW-80,1,'#c9a54a');fr(40,GH/2-7,GW-80,1,'#c9a54a');tx(G.banner.t,GW/2,GH/2-30,'#bfa8ff','center',6);tx(G.banner.s,GW/2,GH/2-14,'#fff','center',12);g.globalAlpha=1}
  if(G.msgT>0){g.globalAlpha=Math.min(1,G.msgT);tx(G.msg,GW/2,70,'#ffe66d','center',8);g.globalAlpha=1}
- if(G.mode==='dying'){g.fillStyle='rgba(0,0,0,'+Math.min(.78,(1.6-G.dieT)*.6)+')';g.fillRect(0,0,GW,GH);g.globalAlpha=Math.min(1,(1.6-G.dieT)*.8);glow(GW/2,GH/2,100,'192,36,60',.35);tx('HAS CAÍDO',GW/2,GH/2+6,'#c0243c','center',18);g.globalAlpha=1}
  if(G.win>0){const a=Math.min(.5,(2.5-G.win)*.4);g.fillStyle='rgba(255,230,109,'+a+')';g.fillRect(0,GH/2-24,GW,38);tx('JEFE DERROTADO',GW/2,GH/2+2,'#fff','center',14)}}
 
 // ===== auxiliares de la ampliación =====

@@ -68,7 +68,7 @@ const dodging=()=>P.s==='dodge'&&P.t>.03&&P.t<(hasR('paso')?.36:.26);
 const inp=()=>{let x=(held.right?1:0)-(held.left?1:0),y=(held.down?1:0)-(held.up?1:0);if(joy.on)return{x:joy.x,y:joy.y};if(x&&y){x*=.7071;y*=.7071}return{x,y}};
 function takeHit(d,fx,fy){const p=P;if(p.s==='dead')return;p.hp-=d;p.sk=0;G.shake=4;G.hs=.08;G.flash=.25;p.sd=.5;buzz(40);spark(p.x,p.y,'#ff4d6d',12);spark(p.x,p.y,'#8a1428',6);ftext(p.x,p.y-24,d,'#ff6b7a');
  if(fx!==undefined){const l=Math.hypot(fx,fy)||1;p.kx=fx/l*110;p.ky=fy/l*110}
- if(p.hp<=0){p.hp=0;p.s='dead';p.t=0;G.mode='dying';G.dieT=1.6;if(S.souls>0)S.drop={r:S.ri,x:p.x,y:p.y,s:S.souls};S.souls=0;S.st.deaths++;checkAch();return}
+ if(p.hp<=0){p.hp=0;p.s='dead';p.t=0;G.mode='dying';G.dieT=window.DIE_TOTAL||4.5;if(S.souls>0)S.drop={r:S.ri,x:p.x,y:p.y,s:S.souls};S.souls=0;S.st.deaths++;checkAch();return}
  p.s='hit';p.t=0;p.hd=true}
 function hurtP(d,e){const p=P;if(dodging()){spark(p.x,p.y,'#7df9ff',4);ftext(p.x,p.y-26,'esquiva','#7df9ff');p.cnt=1.1;p.st=Math.min(p.mst,p.st+(hasR('cieno')?20:8));return}
  const ax=e.x-p.x,ay=e.y-p.y,l=Math.hypot(ax,ay)||1,front=(ax*p.fx+ay*p.fy)/l>.1;
