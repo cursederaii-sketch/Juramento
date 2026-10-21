@@ -15,7 +15,7 @@ const vigSpr=(k,r0,rgb,al)=>VIGS[k]||(VIGS[k]=(()=>{const c=mkc(GW,GH),x=c.getCo
 // capa de agua animada: un único canvas del tamaño del mapa por fotograma de animación
 const waterSet=th=>th._ws||(th._ws=[0,1,2,3].map(f=>[0,1,2,3,4].map(v=>bakeWater(th,f,v))));
 function waterLayers(w){if(w._wl)return w._wl;const ws=waterSet(w.th);w._wl=[0,1,2,3].map(f=>{const c=mkc(w.cols*16,w.rows*16),x=c.getContext('2d');for(const t of w.water){x.drawImage(ws[f][t.v],t.tx*16,t.ty*16);if(t.e.length){x.globalAlpha=.55;for(const[sd,col]of t.e)x.drawImage(edgeStrip(col,sd,t.v),t.tx*16,t.ty*16);x.globalAlpha=1}}return c});return w._wl}
-const tx=(s,x,y,c,al,sz)=>{g.font=(sz||8)+'px '+FONT;g.textAlign=al||'left';g.fillStyle='#000';g.fillText(s,x+1,y+1);g.fillStyle=c;g.fillText(s,x,y)};
+const tx=(s,x,y,c,al,sz)=>{sz=sz||8;g.font=(sz<10&&window.TXK>1?Math.round(sz*window.TXK):sz)+'px '+FONT;g.textAlign=al||'left';g.fillStyle='#000';g.fillText(s,x+1,y+1);g.fillStyle=c;g.fillText(s,x,y)};
 const dirOf=(fx,fy)=>Math.abs(fx)>Math.abs(fy)?(fx<0?'l':'r'):(fy<0?'u':'d');
 const tint=(c,col)=>cached('tn'+(c._id||(c._id=Math.random()))+col,()=>{const f=mkc(c.width,c.height),x=f.getContext('2d');x.drawImage(c,0,0);x.globalCompositeOperation='source-atop';x.fillStyle=col;x.fillRect(0,0,f.width,f.height);return f});
 function shadow(x,y,w,a=.32){g.fillStyle='rgba(0,0,0,'+a+')';g.fillRect(Math.round(x-w/2+2),Math.round(y-1),w-4,1);g.fillRect(Math.round(x-w/2),Math.round(y),w,1);g.fillRect(Math.round(x-w/2+2),Math.round(y+1),w-4,1)}
@@ -121,7 +121,7 @@ function drawP(){const p=P,w=WPN(),L=w.l,H=w.h,fx=p.fx,fy=p.fy,x=p.x,y=p.y,id='p
  shadow(x,y,p.s==='dodge'?10:13);
  if(p.s==='dodge'){const sp=rollArt(id,(p.t*16|0));g.globalAlpha=.9;g.drawImage(sp,Math.round(x-15),Math.round(y-20));g.globalAlpha=1;return}
  const A=p.s==='light'?L.a:p.s==='heavy'?H.a:null;
- if(moving){pose='walk';frm=(TM*9|0)}else if(A){pose=p.t<A[0]?'wind':p.t<A[1]+.06?'act':'rec'}else if(p.s==='hit')pose='hit';else if(p.s==='flask')pose='flask';else if(held.block&&p.s==='idle'&&p.ex<=0)pose='block';
+ if(moving){pose='walk';frm=(TM*(p.run?14:9)|0)}else if(A){pose=p.t<A[0]?'wind':p.t<A[1]+.06?'act':'rec'}else if(p.s==='hit')pose='hit';else if(p.s==='flask')pose='flask';else if(held.block&&p.s==='idle'&&p.ex<=0)pose='block';
  // arma
  const k=w.n.includes('Lanza')?'sword':'sword',len=w.wl;let ang,rho=(p.s==='heavy'?1.5:1.15),a0=Math.atan2(p.ay,p.ax);
  const ox=x+(fx?fx*3:(fy>0?6:-6)),oy=y-11;

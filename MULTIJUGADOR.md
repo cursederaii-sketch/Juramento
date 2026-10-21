@@ -26,7 +26,7 @@ Para jugar por internet pon el servidor detrás de HTTPS (el navegador usará ws
 
 ## Límites conocidos de esta v1
 - Solo el anfitrión viaja entre regiones; si muere el anfitrión se recarga la región para todos.
-- Los ataques propios de Ormund Cineris, los de la grieta (caida.js) y otros peligros del escenario solo alcanzan al anfitrión.
+- (Corregido en v8.53) Los peligros de Ormund Cineris ya alcanzan a todos: fisuras del salón (rey_fluido.js) y grietas, cadenas, pozos de gravedad, decretos y sentencia del cráter (caida.js). El anfitrión avisa cada peligro (`{k:'hz'}` / `{k:'fis'}`) y cada jugador lo resuelve en su propio cliente, con su esquiva y su vida. Los golpes de área y los tajos anchos de cualquier enemigo también alcanzan a todos los jugadores dentro del radio, no solo a su objetivo. Los peligros apuntan por turnos a cada jugador vivo. Si el anfitrión acepta el Juramento de los Olvidados, la promesa sostiene a todos una vez frente a la sentencia.
 - Las hogueras de un invitado no reaparecen enemigos; descansa el anfitrión para eso.
 - No hay reconexión automática: si se cae la conexión hay que volver a unirse.
 

@@ -407,3 +407,41 @@ body:has(#tvw.on) #menu:not(.tt){background:radial-gradient(ellipse at 50% 0%,rg
 .card .dd .ddt p{margin:0 0 6px;font-size:13px;line-height:1.45;color:#e8d8ec}.card .dd .ddt p b{color:#ffe66d}
 .card .dd .ddt i{display:block;font-size:12px;color:#9a8aae}
 @media (max-width:520px){.card .dd{gap:12px;padding:12px}.card .dd svg{width:48px;height:42px}}
+
+/* botón Correr (alternar) */
+#ac button[data-r=run]{--c:#ffb35c;grid-area:1/2;width:calc(46px*var(--ts,1));height:calc(46px*var(--ts,1));justify-self:center;align-self:end}
+
+/* ---------- v8.47: controles táctiles pixelart y más cómodos ---------- */
+#ui{padding:8px 18px 18px}
+#ac{grid-template-columns:repeat(3,calc(66px*var(--ts,1)));gap:calc(10px*var(--ts,1))}
+#ac button:nth-child(2),#ac button:nth-child(5){top:calc(-12px*var(--ts,1))}
+#ac button,#ac button[data-k=skill],#ac button[data-k=ult],#ac button[data-r=run]{
+ --px:polygon(0 6px,3px 6px,3px 3px,6px 3px,6px 0,calc(100% - 6px) 0,calc(100% - 6px) 3px,calc(100% - 3px) 3px,calc(100% - 3px) 6px,100% 6px,100% calc(100% - 6px),calc(100% - 3px) calc(100% - 6px),calc(100% - 3px) calc(100% - 3px),calc(100% - 6px) calc(100% - 3px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 3px),3px calc(100% - 3px),3px calc(100% - 6px),0 calc(100% - 6px));
+ border:0;border-radius:0;isolation:isolate;background:var(--c);clip-path:var(--px);-webkit-clip-path:var(--px);box-shadow:none;
+ height:calc(66px*var(--ts,1));width:100%;gap:calc(3px*var(--ts,1));touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:none}
+#ac button[data-k=skill],#ac button[data-k=ult]{width:calc(54px*var(--ts,1));height:calc(54px*var(--ts,1))}
+#ac button:before{content:'';position:absolute;inset:3px;z-index:-1;background:linear-gradient(#3b2a66 0 55%,#241640 55% 82%,#150b28 82%);clip-path:var(--px);-webkit-clip-path:var(--px)}
+#ac button:after{display:none}
+#ac button[data-k=skill]:after,#ac button[data-k=ult]:after{display:none}
+#ac button svg{width:calc(24px*var(--ts,1));height:calc(24px*var(--ts,1));stroke-width:2.4;stroke-linecap:square;stroke-linejoin:miter;filter:none;shape-rendering:crispEdges}
+#ac button i{font:400 calc(6px*var(--ts,1)) 'Press Start 2P',monospace;letter-spacing:0;text-shadow:1px 1px 0 #000}
+#ac button[data-k=skill] i,#ac button[data-k=ult] i{font-size:calc(5px*var(--ts,1))}
+#ac button[data-k=skill] svg,#ac button[data-k=ult] svg{width:calc(19px*var(--ts,1));height:calc(19px*var(--ts,1))}
+#ac button[data-r=run]{--c:#ffb04a}
+#ac button:active,#ac button.on{transform:translateY(2px);background:#fff;color:#fff}
+#ac button:active:before,#ac button.on:before{background:linear-gradient(var(--c) 0 55%,#000 55%);filter:brightness(.85)}
+#ac button:active svg,#ac button.on svg{stroke:#fff}
+#ac button[data-r=run].on{animation:rpx .5s steps(2) infinite}
+@keyframes rpx{50%{filter:brightness(1.25)}}
+#ac button[data-k=skill]{--cd:0}
+#ac button[data-k=skill]:before{background:linear-gradient(#3b2a66 0 55%,#241640 55% 82%,#150b28 82%)}
+#ac button[data-k=ult].rdy{animation:ultpx .6s steps(2) infinite}
+@keyframes ultpx{50%{filter:brightness(1.35)}}
+/* cruceta pixelart */
+#pad{--px:polygon(30% 0,70% 0,70% 6%,82% 6%,82% 18%,94% 18%,94% 30%,100% 30%,100% 70%,94% 70%,94% 82%,82% 82%,82% 94%,70% 94%,70% 100%,30% 100%,30% 94%,18% 94%,18% 82%,6% 82%,6% 70%,0 70%,0 30%,6% 30%,6% 18%,18% 18%,18% 6%,30% 6%);
+ width:calc(160px*var(--ts,1));height:calc(160px*var(--ts,1));border:0;border-radius:0;background:#c9a54a;box-shadow:none;clip-path:var(--px);-webkit-clip-path:var(--px);isolation:isolate}
+#pad:after{content:'';position:absolute;inset:4px;z-index:-1;background:#150b28;clip-path:var(--px);-webkit-clip-path:var(--px)}
+#pad:before{-webkit-mask:none;mask:none;inset:0;border-radius:0;background:linear-gradient(90deg,transparent 47%,rgba(201,165,74,.25) 47% 53%,transparent 53%),linear-gradient(transparent 47%,rgba(201,165,74,.25) 47% 53%,transparent 53%);z-index:-1}
+#ring{border-radius:0;border:2px dashed rgba(201,165,74,.35)}
+#knob{border-radius:0;background:#6a50b8;border:3px solid #ffe9a0;box-shadow:inset -4px -4px 0 #3a2a78,inset 4px 4px 0 #a98cf0,3px 3px 0 #000;clip-path:polygon(0 4px,4px 4px,4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px))}
+#pause{border-radius:0;border:2px solid #c9a54a;background:#150b28;width:44px;height:30px}

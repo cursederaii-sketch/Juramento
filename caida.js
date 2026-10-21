@@ -14,6 +14,17 @@ const RY=()=>S.rey||(S.rey={});
 const CRI=()=>RG.findIndex(r=>r.id==='crater');
 const snd=(k,gn,f,d,t,v,f2)=>{try{if(window.playSfx&&playSfx(k,gn))return}catch(e){}sfx(f||100,d||.3,t||'square',v||.05,f2)};
 const lerp=(a,b,t)=>a+(b-a)*t;
+// ---------- cooperativo: el anfitrión avisa de cada peligro y cada jugador lo resuelve con su propio cuerpo ----------
+// Antes solo el anfitrión veía y sufría grietas, cadenas, pozos y sentencias. Ahora el anfitrión emite el aviso ({k:'hz'}) y cada invitado
+// crea su copia local: usa su propia esquiva y su propia vida (igual que el resto del daño del cooperativo). Los peligros apuntan por turnos
+// a cada jugador vivo, y todos ven todas las advertencias.
+const NN=()=>typeof NET!=='undefined'&&NET.on?NET:null,isCl=()=>{const n=NN();return !!n&&!n.host},isHo=()=>{const n=NN();return !!n&&n.host&&Object.keys(n.pl).length>0};
+const bc=o=>{if(isHo()){o.k='hz';const q=RY().oath;if(q!==undefined)o.o=q;NET.send(o)}};
+const OA=()=>(isCl()&&CA.noath!==undefined)?CA.noath:RY().oath;
+const q1=v=>Math.round(v*10)/10;
+const pickT=()=>{if(!isHo())return P;const L=[P].concat(Object.values(NET.pl)).filter(q=>q&&q.s!=='dead');return L.length?L[(CA.rr=(CA.rr||0)+1)%L.length]:P};
+const nearPeer=(x,y)=>isHo()&&Object.values(NET.pl).some(q=>q.s!=='dead'&&Math.hypot(q.x-x,q.y-y)<=14);
+const plug=f=>{if(window.NET)f(window.NET);else(window.NET_PLUGINS=window.NET_PLUGINS||[]).push(f)};
 // encuadre de la llegada al cráter: la cámara baja FRM px para que el Rey (y su silueta) quede entero en pantalla, sin cortarse arriba
 const FRM=37,FIGX=GW/2,FIGY=GH/2-76+FRM;
 // durante la cinemática se ocultan pausa, pantalla completa y todos los controles táctiles (body.cine en style.css)
@@ -63,38 +74,39 @@ CUT.rey=()=>{const o=RY().oath;return D('Ormund Cineris',o===1?'«Yo juré que V
  d.n='El cráter de Valdorra';d.o=add.concat(d.o||[]);return d}}
 
 // ---------- subtítulos de combate (la Voz, Azrael, el Rey) ----------
-function sub(w,t,l){CA.sub={w,t,l:l||3,m:l||3}}
+function sub(w,t,l){CA.sub={w,t,l:l||3,m:l||3};bc({h:'sub',w,t,l:l||3})}
 function wrap(s,w,sz){g.font=(sz||6)+'px '+FONT;const ws=s.split(' '),L=[];let c='';for(const x of ws){const t=c?c+' '+x:x;if(g.measureText(t).width>w&&c){L.push(c);c=x}else c=t}if(c)L.push(c);return L}
 
 // ---------- el Rey en el cráter ----------
-function resetHaz(){CA.hz=[];CA.ch=[];CA.gv=[];CA.dr=[];CA.sc=[];CA.dec=null;CA.sen=null;CA.ap=0;CA.free=0;CA.b1=0;CA.apS=0;CA.sub=null;CA.tm={cr:2.6,ch:6,gv:8,dr:4.5,dc:7,sn:9}}
+function resetHaz(){bc({h:'clr'});CA.hz=[];CA.ch=[];CA.gv=[];CA.dr=[];CA.sc=[];CA.dec=null;CA.sen=null;CA.ap=0;CA.free=0;CA.b1=0;CA.apS=0;CA.sub=null;CA.tm={cr:2.6,ch:6,gv:8,dr:4.5,dc:7,sn:9}}
 function mkBoss(){const R_=RY();if(R_.done)return;resetHaz();CA.on=1;CA.p2=(R_.hpf||.75)<=.35?1:0;
  const be=mk('boss',20*16+8,12*16+8,'rey');be.arena=1;be.hp=Math.max(1,Math.round(be.mhp*(R_.hpf||.75)));be.ph=CA.p2?2:1;see(be);be.s='stg';be.tm=0;be.stgT=1.3;be.cd=1.2;be.fell=1;E.push(be);G.bossOn=true;W.setGate(true);
  if(P)P.sur=R_.oath===1?1:0}
 {const se=spawnEn;spawnEn=function(){se();CA.on=0;if(rg&&rg.id==='crater')mkBoss()}}
-{const lr=loadRegion;loadRegion=function(i,fi,at){if(RG[i].id!=='crater')CA.on=0;const r_=lr(i,fi,at);if(rg.id==='crater'&&CA.on)P.sur=RY().oath===1?1:0;return r_}}
+{const lr=loadRegion;loadRegion=function(i,fi,at){if(RG[i].id!=='crater')CA.on=0;if(isCl()){CA.noath=undefined;CA.surG=0;CA.hz=[];CA.ch=[];CA.gv=[];CA.sc=[];CA.sen=null;CA.dec=null;CA.ap=0;CA.free=0}const r_=lr(i,fi,at);if(rg.id==='crater'&&CA.on)P.sur=RY().oath===1?1:0;return r_}}
 
 function pseg(px,py,x1,y1,x2,y2){const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy||1,t=C(((px-x1)*dx+(py-y1)*dy)/l2),qx=x1+dx*t,qy=y1+dy*t;return Math.hypot(px-qx,py-qy)}
 function hurt(d,fx,fy){if(P.s==='dead'||dodging())return false;takeHit(d,fx,fy);return true}
-function crack(e,n){const a0=Math.atan2(P.y-e.y,P.x-e.x);snd('rumble',.45,180,.6,'sawtooth',.05,360);
- for(let i=0;i<n;i++){const a=a0+(n>1?(i-(n-1)/2)*.42:(R()-.5)*.22),L=250;CA.hz.push({x1:e.x,y1:e.y-4,x2:e.x+Math.cos(a)*L,y2:e.y-4+Math.sin(a)*L,t:0,tel:n>1?.92:1.05,w:10,f:0,sd:R()*99})}}
-function chain(){const o=R()<.5?'h':'v',p=o==='h'?P.y:P.x,s=R()<.5?-1:1;snd('alarm',.3,260,.5,'sawtooth',.04,520);CA.ch.push({o,p,t:0,tel:1.2,f:0},{o,p:p+s*64,t:0,tel:1.2,f:0})}
-function gravity(){const a=W.arena,ang=R()*6.283,d=rn(26,60),x=cl(P.x+Math.cos(ang)*d,(a.x+3)*16,(a.x+a.w-3)*16),y=cl(P.y+Math.sin(ang)*d,(a.y+3)*16,(a.y+a.h-3)*16);
- snd('magic',.4,500,.7,'sine',.04,260);CA.gv.push({x,y,t:0,tel:1,dur:3.6,r:46,tk:0})}
-function derrumbe(){const a=W.arena,x=cl(P.x+(R()-.5)*100,(a.x+2)*16,(a.x+a.w-2)*16),y=cl(P.y+(R()-.5)*80,(a.y+2)*16,(a.y+a.h-2)*16),r={x,y,t:0};RK.push(r);CA.dr.push(r)}
+function crack(e,n){const T=pickT(),a0=Math.atan2(T.y-e.y,T.x-e.x);snd('rumble',.45,180,.6,'sawtooth',.05,360);
+ for(let i=0;i<n;i++){const a=a0+(n>1?(i-(n-1)/2)*.42:(R()-.5)*.22),L=250;CA.hz.push({x1:e.x,y1:e.y-4,x2:e.x+Math.cos(a)*L,y2:e.y-4+Math.sin(a)*L,t:0,tel:n>1?.92:1.05,w:10,f:0,sd:R()*99})}
+ bc({h:'cr',l:CA.hz.slice(-n).map(h=>[q1(h.x1),q1(h.y1),q1(h.x2),q1(h.y2),h.tel,h.sd])})}
+function chain(){const T=pickT(),o=R()<.5?'h':'v',p=o==='h'?T.y:T.x,s=R()<.5?-1:1;snd('alarm',.3,260,.5,'sawtooth',.04,520);CA.ch.push({o,p,t:0,tel:1.2,f:0},{o,p:p+s*64,t:0,tel:1.2,f:0});bc({h:'ch',l:CA.ch.slice(-2).map(c=>[c.o,q1(c.p)])})}
+function gravity(){const T=pickT(),a=W.arena,ang=R()*6.283,d=rn(26,60),x=cl(T.x+Math.cos(ang)*d,(a.x+3)*16,(a.x+a.w-3)*16),y=cl(T.y+Math.sin(ang)*d,(a.y+3)*16,(a.y+a.h-3)*16);
+ snd('magic',.4,500,.7,'sine',.04,260);CA.gv.push({x,y,t:0,tel:1,dur:3.6,r:46,tk:0});bc({h:'gv',x:q1(x),y:q1(y)})}
+function derrumbe(){const T=pickT(),a=W.arena,x=cl(T.x+(R()-.5)*100,(a.x+2)*16,(a.x+a.w-2)*16),y=cl(T.y+(R()-.5)*80,(a.y+2)*16,(a.y+a.h-2)*16),r={x,y,t:0};RK.push(r);CA.dr.push(r)}
 function decree(e){const k=(CA.dk=(CA.dk+1)%2)?'flask':'aliento',tx_=k==='flask'?'«Ningún frasco será bebido.»':'«El aliento te será quitado.»';snd('bell',.6,240,.9,'sine',.07,300);
- if(RY().oath===1&&e.ph===2){CA.ap=3;toast('Resistes la voluntad de Azrael');FX.push({k:'ring',x:P.x,y:P.y,l:.7,m:.7,c:'255,230,109',big:1});snd('chime_up',.6,600,1,'sine',.06,1200);
+ if(RY().oath===1&&e.ph===2){CA.ap=3;bc({h:'ap'});toast('Resistes la voluntad de Azrael');FX.push({k:'ring',x:P.x,y:P.y,l:.7,m:.7,c:'255,230,109',big:1});snd('chime_up',.6,600,1,'sine',.06,1200);
   if(!CA.apS){CA.apS=1;sub('La Voz','¡El vínculo se abre! ¡Golpéalo ahora!',3.2)}else sub('Azrael',tx_,2.2)}
- else{CA.dec={k,l:6,m:6};sub('Azrael',tx_,2.6)}}
-function offer(e){CA.hz=[];CA.ch=[];CA.gv=[];CA.sen=null;CA.dec=null;CA.ap=0;RK.length=0;PR.length=0;e.s='stg';e.tm=0;e.stgT=.8;
+ else{CA.dec={k,l:6,m:6};bc({h:'dec',k});sub('Azrael',tx_,2.6)}}
+function offer(e){bc({h:'clr'});CA.hz=[];CA.ch=[];CA.gv=[];CA.sen=null;CA.dec=null;CA.ap=0;RK.length=0;PR.length=0;e.s='stg';e.tm=0;e.stgT=.8;
  say(D('La Voz','«No puedo vencerlo por ti.»<br><i>'+nm()+':</i> «Entonces, ¿qué puedes darme?»<br>«La libertad de desobedecerlo. Pero tendrás que recordar lo que el reino quiso olvidar.»',[
-  ['Aceptar el Juramento de los Olvidados',()=>{const R_=RY();R_.oath=1;R_.hpf=.35;P.sur=1;FX.push({k:'ring',x:P.x,y:P.y,l:1.1,m:1.1,c:'255,230,109',big:1});spark(P.x,P.y-10,'#ffe66d',26,18,1.4);G.shake=5;snd('choir',.8,150,1.2,'sine',.08,300);toast('Juramento de los Olvidados');
+  ['Aceptar el Juramento de los Olvidados',()=>{const R_=RY();R_.oath=1;R_.hpf=.35;P.sur=1;bc({h:'oa'});FX.push({k:'ring',x:P.x,y:P.y,l:1.1,m:1.1,c:'255,230,109',big:1});spark(P.x,P.y-10,'#ffe66d',26,18,1.4);G.shake=5;snd('choir',.8,150,1.2,'sine',.08,300);toast('Juramento de los Olvidados');
     return D('La Voz','Entonces recuerda. Cuando Azrael imponga su voluntad, resistirás y el vínculo del Rey se abrirá un instante: golpéalo. Y una vez, solo una, la promesa te sostendrá frente a su sentencia.')}],
-  ['Rechazarlo: no cargaré con eso',()=>{const R_=RY();R_.oath=-1;R_.hpf=.35;toast('Rechazas el juramento');return D('La Voz','Entonces lucharás solo. Que el reino no te lo reproche.')}]]))}
-function free(e){CA.free=1;CA.ap=0;CA.hz=[];CA.ch=[];CA.gv=[];CA.sen=null;CA.dec=null;RK.length=0;e.s='stg';e.tm=0;e.stgT=1.6;G.shake=8;G.hs=.25;CA.fl=.8;
+  ['Rechazarlo: no cargaré con eso',()=>{const R_=RY();R_.oath=-1;R_.hpf=.35;bc({h:'oa'});toast('Rechazas el juramento');return D('La Voz','Entonces lucharás solo. Que el reino no te lo reproche.')}]]))}
+function free(e){bc({h:'free'});CA.free=1;CA.ap=0;CA.hz=[];CA.ch=[];CA.gv=[];CA.sen=null;CA.dec=null;RK.length=0;e.s='stg';e.tm=0;e.stgT=1.6;G.shake=8;G.hs=.25;CA.fl=.8;
  FX.push({k:'ring',x:e.x,y:e.y,l:1.2,m:1.2,c:'255,230,109',big:1});spark(e.x,e.y-16,'#ffe66d',34,20,1.6);snd('boom_long',.7,60,1,'sawtooth',.1,30);toast('El vínculo se rompe');
  sub('La Voz','El vínculo cede. Ahora solo queda él.',3.6)}
-function sentencia(){CA.sen={x:P.x,y:P.y,t:0,lock:2.1,fire:2.8,f:0};snd('bell',.9,240,.9,'sine',.07,300);sub('Azrael','«Todo juramento se cumple.»',2.6)}
+function sentencia(){bc({h:'sen'});CA.sen={x:P.x,y:P.y,t:0,lock:2.1,fire:2.8,f:0};snd('bell',.9,240,.9,'sine',.07,300);sub('Azrael','«Todo juramento se cumple.»',2.6)}
 
 function updHaz(dt){
  for(const h of CA.hz){h.t+=dt;if(!h.f&&h.t>=h.tel){h.f=1;G.shake=Math.max(G.shake,5);snd('boom',.55,70,.5,'sawtooth',.1,40);
@@ -109,7 +121,7 @@ function updHaz(dt){
     if(d<9){z.tk-=dt;if(z.tk<=0){z.tk=.6;hurt(7,P.x-z.x,P.y-z.y)}}}}}
  CA.gv=CA.gv.filter(z=>z.t<z.tel+z.dur);
  for(const r of CA.dr){if(r.d&&!r.p){r.p=1;const tx_=r.x>>4,ty_=r.y>>4,i=W.i(tx_,ty_);
-   if(W.ok(tx_,ty_)&&!W.on[i]&&W.gd[i]!=='k'&&Math.hypot(P.x-(tx_*16+8),P.y-(ty_*16+8))>14&&!E.some(q=>q.s!=='dead'&&Math.hypot(q.x-(tx_*16+8),q.y-(ty_*16+8))<16)){W.on[i]=R()<.55?'rock':'pillar';W.ov[i]=R()*255|0}}}
+   if(W.ok(tx_,ty_)&&!W.on[i]&&W.gd[i]!=='k'&&Math.hypot(P.x-(tx_*16+8),P.y-(ty_*16+8))>14&&!nearPeer(tx_*16+8,ty_*16+8)&&!E.some(q=>q.s!=='dead'&&Math.hypot(q.x-(tx_*16+8),q.y-(ty_*16+8))<16)){W.on[i]=R()<.55?'rock':'pillar';W.ov[i]=R()*255|0;bc({h:'tl',i,v:W.on[i],ov:W.ov[i]})}}}
  CA.dr=CA.dr.filter(r=>!r.p);
  const s=CA.sen;if(s){s.t+=dt;if(s.t<s.lock){s.x+=(P.x-s.x)*Math.min(1,dt*2.4);s.y+=(P.y-s.y)*Math.min(1,dt*2.4)}
   if(!s.f&&s.t>=s.fire){s.f=1;G.shake=9;G.hs=.12;snd('ult',.9,70,1.2,'sawtooth',.12,35);spark(s.x,s.y,'#ffe66d',30,10,1.5);
@@ -121,7 +133,9 @@ function updHaz(dt){
  if(CA.fl>0)CA.fl-=dt*2}
 function rey(dt){const e=E.find(q=>q.id==='rey'&&q.b);if(!e||e.s==='dead')return;
  if(rg.id==='trono'){if(!e.fell&&e.aw&&P.s!=='dead'&&e.hp/e.mhp<=.75){e.fell=1;startCut(e)}return}
- if(rg.id!=='crater'||!CA.on)return;
+ if(rg.id!=='crater')return;
+ if(isCl()){CA.on=1;updHaz(dt);return}   // invitado: solo avanza las copias de los peligros que avisa el anfitrión
+ if(!CA.on)return;
  updHaz(dt);
  const R_=RY(),r=e.hp/e.mhp,ph=e.ph,m=CA.tm,fast=ph===2;
  if(ph>=1&&!CA.b1&&r<.62){CA.b1=1;sub('La Voz','Ese poder no es suyo: es el precio de su promesa.',4.2)}
@@ -136,7 +150,7 @@ function rey(dt){const e=E.find(q=>q.id==='rey'&&q.b);if(!e||e.s==='dead')return
  if(fast&&!CA.sen&&(m.sn-=dt)<=0){m.sn=17;sentencia()}}
 
 // ---------- daño al Rey: autoridad de Azrael y aperturas del vínculo ----------
-{const h=hitE;hitE=function(e,d,k,v){if(e&&e.id==='rey'&&e.b&&rg.id==='crater'&&e.ph===2&&RY().oath===1&&!CA.free)d*=CA.ap>0?1.8:.3;return h.call(this,e,d,k,v)}}
+{const h=hitE;hitE=function(e,d,k,v){if(e&&e.id==='rey'&&e.b&&rg.id==='crater'&&e.ph===2&&OA()===1&&!CA.free)d*=CA.ap>0?1.8:.3;return h.call(this,e,d,k,v)}}
 // resistencia del Rey: recibe menos daño según la fase y los golpes pesados ya no lo aturden (la parada y la contra sí)
 {const h=hitE;hitE=function(e,d,k,v){if(!(e&&e.id==='rey'&&e.b))return h.call(this,e,d,k,v);const s0=e.s,t0=e.tm,g0=e.stgT,r0=e.rip;d*=REY_RES[Math.min(2,e.ph|0)];const o=h.call(this,e,d,k,v);if(s0!=='stg'&&e.s==='stg'&&!r0&&e.hp>0){e.s=s0;e.tm=t0;e.stgT=g0}return o}}
 {const b=bossDown;bossDown=function(e){if(e&&e.id==='rey'){CA.on=0;CA.hz=[];CA.ch=[];CA.gv=[];CA.sen=null;CA.dec=null;RY().done=1}return b.apply(this,arguments)}}
@@ -352,6 +366,30 @@ function overlayCut(c){const t=c.t;
   u(dt);lockCam();
   if(G.mode==='play'&&G.hs<=0)rey(dt)}}
 
+// ---------- cooperativo (invitado): copias locales de los peligros que avisa el anfitrión ----------
+const HZH={
+ cr:m=>{for(const a of m.l)CA.hz.push({x1:a[0],y1:a[1],x2:a[2],y2:a[3],t:0,tel:a[4],w:10,f:0,sd:a[5]})},
+ ch:m=>{snd('alarm',.3,260,.5,'sawtooth',.04,520);for(const a of m.l)CA.ch.push({o:a[0],p:a[1],t:0,tel:1.2,f:0})},
+ gv:m=>{snd('magic',.4,500,.7,'sine',.04,260);CA.gv.push({x:m.x,y:m.y,t:0,tel:1,dur:3.6,r:46,tk:0})},
+ dec:m=>{snd('bell',.6,240,.9,'sine',.07,300);CA.dec={k:m.k,l:6,m:6}},
+ ap:m=>{CA.ap=3;toast('Resistes la voluntad de Azrael');if(P)FX.push({k:'ring',x:P.x,y:P.y,l:.7,m:.7,c:'255,230,109',big:1});snd('chime_up',.6,600,1,'sine',.06,1200)},
+ sen:m=>{if(!P)return;CA.sen={x:P.x,y:P.y,t:0,lock:2.1,fire:2.8,f:0};snd('bell',.9,240,.9,'sine',.07,300)},
+ sub:m=>{CA.sub={w:m.w,t:m.t,l:m.l,m:m.l}},
+ clr:m=>{CA.hz=[];CA.ch=[];CA.gv=[];CA.sen=null;CA.dec=null;CA.ap=0},
+ free:m=>{CA.free=1;CA.ap=0;CA.hz=[];CA.ch=[];CA.gv=[];CA.sen=null;CA.dec=null;CA.fl=.8;toast('El vínculo se rompe');snd('boom_long',.7,60,1,'sawtooth',.1,30)},
+ tl:m=>{if(W&&W.on&&m.i>=0&&m.i<W.on.length){W.on[m.i]=m.v;W.ov[m.i]=m.ov}},
+ st:m=>{if(m.fr)CA.free=1;if(m.ap>0)CA.ap=m.ap}
+};
+plug(N=>{
+ N.ext.hz=m=>{
+  if(!isCl()||typeof rg==='undefined'||!rg||rg.id!=='crater'||!P)return;
+  CA.on=1;
+  if(m.o!==undefined)CA.noath=m.o;
+  if(CA.noath===1&&!CA.surG){CA.surG=1;P.sur=1}   // la promesa del anfitrión sostiene a todos una vez
+  const f=HZH[m.h];if(f)f(m)};
+ N.sub('peer+',id=>{if(isHo()&&rg&&rg.id==='crater'&&CA.on)NET.sendTo(id,{k:'hz',h:'st',o:RY().oath,fr:CA.free,ap:CA.ap})});
+});
+
 // ---------- peligros dibujados en el mundo (dentro de la transformación de cámara) ----------
 function crackPath(x1,y1,x2,y2,sd,seg){g.beginPath();g.moveTo(x1,y1);const n=seg||12,nx=-(y2-y1),ny=x2-x1,nl=Math.hypot(nx,ny)||1;for(let i=1;i<=n;i++){const q=i/n,o=(hsh(sd+i)-.5)*(i<n?9:0);g.lineTo(lerp(x1,x2,q)+nx/nl*o,lerp(y1,y2,q)+ny/nl*o)}}
 function drawHaz(){if(!CA.on)return;const a=W.arena,e=E.find(q=>q.id==='rey'&&q.b&&q.s!=='dead');
@@ -379,7 +417,7 @@ function drawHaz(){if(!CA.on)return;const a=W.arena,e=E.find(q=>q.id==='rey'&&q.
 function overlayHud(){const e=E.find(q=>q.id==='rey'&&q.b&&q.s!=='dead'),R_=RY();
  if(CA.fl>0){g.fillStyle='rgba(255,246,210,'+Math.min(.7,CA.fl)+')';g.fillRect(0,0,GW,GH)}
  if(CA.dec){const d=CA.dec,txt=d.k==='flask'?'SIN FRASCOS':'SIN ALIENTO';fr(GW/2-62,80,124,13,'rgba(20,10,4,.8)');fr(GW/2-62,80,124,1,'#c9a54a');fr(GW/2-62,92,124,1,'#c9a54a');tx('AZRAEL · '+txt,GW/2,90,'#ffd070','center',6);fr(GW/2-60,93,120*C(d.l/d.m),1,'#ffd070')}
- if(e&&R_.oath===1&&e.ph===2&&!CA.free){const ap=CA.ap>0,w=132,x=GW/2-w/2,y=GH-52;fr(x-1,y-1,w+2,7,'#0a0610');fr(x,y,w,5,'#2a1a10');
+ if(e&&OA()===1&&e.ph===2&&!CA.free){const ap=CA.ap>0,w=132,x=GW/2-w/2,y=GH-52;fr(x-1,y-1,w+2,7,'#0a0610');fr(x,y,w,5,'#2a1a10');
   if(ap){fr(x,y,w*C(CA.ap/3),5,'#ffe66d');tx('VÍNCULO EXPUESTO',GW/2,y-4,'#fff2b0','center',6)}else{fr(x,y,w,5,'rgba(255,170,60,.45)');tx('AUTORIDAD DE AZRAEL',GW/2,y-4,'#c9a54a','center',5)}}
  if(P&&P.sur>0){const x=12,y=76;g.fillStyle='#ffe66d';g.beginPath();g.moveTo(x,y-4);g.lineTo(x+4,y);g.lineTo(x,y+4);g.lineTo(x-4,y);g.fill();glowQ(x,y,10,'255,230,109',.3);tx('Promesa',x+8,y+2,'#ffe66d','left',5)}
  if(CA.sub){const s=CA.sub,al=Math.min(1,s.l*3,(s.m-s.l)*4+.01),L=wrap(s.t,330,6),h=L.length*9+10,col=s.w==='Azrael'?'#ffd070':s.w==='La Voz'?'#9ad0ff':'#c9b8ff',y=GH-62-h;g.globalAlpha=al;fr(GW/2-170,y,340,h,'rgba(8,4,14,.78)');fr(GW/2-170,y,2,h,col);tx(s.w.toUpperCase(),GW/2-162,y+9,col,'left',5);L.forEach((l,i)=>tx(l,GW/2-162,y+19+i*9,'#f4ecff','left',6));g.globalAlpha=1}}

@@ -20,7 +20,7 @@ const emit = (n, a) => (NET.ev[n] || []).forEach(f => { try { f(a); } catch (e) 
 const COL = ['#7df9ff', '#ffe66d', '#7dff9a', '#ff9a6b'];
 const GM = new Map();               // invitado: id de red -> fantasma enemigo
 const SENT = new Map();             // anfitrión: id de red -> última clave enviada
-let NID = 0, sacc = 0, shT = 0, shN = 0, shKey = '', inAcc = 0, fullNext = true;
+let NID = 0, sacc = 0, shT = 0, shN = 0, shKey = '', inAcc = 0, inKey = '', inT = 0, fullNext = true;
 const isCl = () => NET.on && !NET.host;
 const isHo = () => NET.on && NET.host;
 const send = o => { const w = NET.ws; if (w && w.readyState === 1) { o.t = 'g'; w.send(JSON.stringify(o)); } };
@@ -31,6 +31,7 @@ NET.send = send; NET.sendTo = sendTo; NET.col = id => COL[id & 3];
 NET.allIds = () => { const a = new Set([NET.id]); if (NET.host) peers().forEach(q => a.add(q.rid)); else Object.keys(NET.gp).forEach(k => a.add(+k)); return [...a].sort((x, y) => x - y); };
 NET.nameOf = id => id === NET.id ? NET.name : (NET.host ? (NET.pl[id] && NET.pl[id].n) : (NET.gp[id] && NET.gp[id].n)) || ('Jugador ' + (id + 1));
 const alive = q => q && q.s !== 'dead';
+const unbl = e => !!(e && !e.proj && e.cur && (e.cur.unb || (window.CFLU && CFLU.rey && CFLU.rey.RED && e.id === 'rey' && e.b && CFLU.rey.RED.includes(e.cur)))) ? 1 : 0; // ataque rojo: no se para
 
 // ---------------------------------------------------------------- estado de jugadores
 function pState(p) {
@@ -87,6 +88,15 @@ function snapshot(full) {
 function shState() {
   const z = {}; for (const q of W.pzs) z[q.id] = [q.lit, q.prog];
   return { k: 'sh', bk: S.bk, lv: S.lv, dl: S.dl, pz: S.pz, rv: S.rv, am: S.am, clk: S.clk, nt: S.night ? 1 : 0, zl: z };
+}
+let snapKey = '', snapT = 0;
+function sendSnap(full) {
+  const s = snapshot(full);
+  // sin cambios en enemigos, muertes, proyectiles ni jugadores (el reloj de animación de los jugadores, índice 9, no cuenta: cada cliente lo avanza solo)
+  const idle = !full && !s.u.length && !s.r.length && !s.kl.length;
+  const key = JSON.stringify([s.p.map(a => a.map((v, i) => i === 9 ? 0 : v)), s.pr, s.rk, s.bo]), now = performance.now();
+  if (idle && key === snapKey && now - snapT < 1000) return;
+  snapKey = key; snapT = now; send(s);
 }
 function sendSh(to) { if (!W) return; const o = shState(); if (to != null) sendTo(to, o); else send(o); }
 function bcRegion(to) {
@@ -219,14 +229,17 @@ function clientMsg(m) {
     case 'sh': applySh(m); break;
     case 'reg': applyReg(m); break;
     case 's': if (W) applySnap(m); break;
-    case 'hit': { if (!P || P.s === 'dead' || G.mode === 'title') break; const e = { x: m.ex, y: m.ey, proj: m.pj ? 1 : 0, s: '', tm: 0, nid: m.en }; hurtP(m.d, e); if (e.s === 'stg' && m.en) send({ k: 'parry', i: m.en }); break; }
+    case 'hit': { if (!P || P.s === 'dead' || G.mode === 'title') break; const e = { x: m.ex, y: m.ey, proj: m.pj ? 1 : 0, s: '', tm: 0, nid: m.en }; if (m.ub) e.cur = { unb: 1 }; hurtP(m.d, e); if (e.s === 'stg' && m.en) send({ k: 'parry', i: m.en }); break; }
     case 'th': { if (!P || P.s === 'dead' || G.mode === 'title') break; if (m.rock && dodging()) break; takeHit(m.d, m.fx, m.fy); break; }
     default: if (NET.ext[m.k]) NET.ext[m.k](m);
   }
 }
 function sendIn(dt) {
   // Estado del invitado a 10 Hz: mantiene la interpolación y reduce el consumo de cuota en servicios gratuitos.
-  inAcc += dt; if (inAcc < .1 || !P) return; inAcc = 0; send({ k: 'in', a: pState(P) });
+  inAcc += dt; if (inAcc < .1 || !P) return;
+  const a = pState(P), k = JSON.stringify(a.map((v, i) => i === 7 ? 0 : v)), now = performance.now();   // índice 7 = reloj de animación
+  if (k === inKey && now - inT < 1000) return;                                                      // quieto: solo un latido por segundo
+  inAcc = 0; inKey = k; inT = now; send({ k: 'in', a });
 }
 
 // ---------------------------------------------------------------- enganches al motor
@@ -247,8 +260,11 @@ function hostUpdate(dt) {
   if (force && G.mode === 'play') G.mode = gm;
   if (np > 0) {
     sacc += dt; shT += dt;
-    if (sacc >= 1 / 15) { sacc = 0; const full = fullNext; fullNext = false; send(snapshot(full)); }
-    if (shT >= 1) { shT = 0; const k = JSON.stringify(Object.assign(shState(), { clk: 0 })); if (k !== shKey || ++shN >= 3) { shKey = k; shN = 0; sendSh(); } }
+    // Coste en Cloudflare: cada mensaje que entra al Durable Object cuenta como 1/20 de request. 15 Hz solo cuando hay acción
+    // (enemigos despiertos, proyectiles, rocas, jefe); en calma baja a 8 Hz y, si nada cambió, no se envía nada salvo un latido por segundo.
+    const calm = !G.bossOn && !PR.length && !RK.length && !E.some(e => e.aw && e.s !== 'dead');
+    if (sacc >= (calm ? 1 / 8 : 1 / 15)) { sacc = 0; const full = fullNext; fullNext = false; sendSnap(full); }
+    if (shT >= 1) { shT = 0; const k = JSON.stringify(Object.assign(shState(), { clk: 0 })); if (k !== shKey || ++shN >= 5) { shKey = k; shN = 0; sendSh(); } }
   } else fullNext = true;
 }
 function clientUpdate(dt) {
@@ -268,12 +284,32 @@ function clientUpdate(dt) {
   if (!NET.on) return u0.call(this, e, dt);
   if (!NET.host) return;                                   // invitado: los fantasmas los mueve la instantánea
   if (!peers().length) return u0.call(this, e, dt);
-  const real = P, tg = pickTarget(e);
-  if (tg === real) return u0.call(this, e, dt);
-  P = tg; try { return u0.call(this, e, dt); } finally { P = real; }
+  const real = P, tg = pickTarget(e), s0 = e.s, hd0 = e.hd;
+  if (tg === real) u0.call(this, e, dt);
+  else { P = tg; try { u0.call(this, e, dt); } finally { P = real; } }
+  sweep(e, s0, hd0, tg);
 } }
+// El motor solo mira al objetivo del enemigo: un golpe de área (o un tajo ancho de jefe) no tocaba a los demás aunque estuvieran dentro.
+// Aquí se repite la misma prueba de alcance del motor para el resto de jugadores, una vez por ataque y jugador. Los proyectiles ya los resuelve remoteHazards.
+function sweep(e, s0, hd0, tg) {
+  const c = e.cur;
+  if (e.s !== 'act' || !c || c.proj || c.tp) { e._hs = null; return; }
+  if (s0 !== 'act' || !e._hs) e._hs = new Set();      // ataque nuevo
+  const hs = e._hs, tid = tg === P ? 0 : tg.rid;
+  if (s0 === 'act' && !hd0 && e.hd) hs.add(tid);       // el objetivo ya recibió el golpe
+  const d = Math.round(c.d * (e.dm || 1));
+  for (const o of [P].concat(peers())) {
+    if (o === tg || !alive(o)) continue;
+    const id = o === P ? 0 : o.rid; if (hs.has(id)) continue;
+    const rx = o.x - e.x, ry = o.y - e.y, dd = Math.hypot(rx, ry) || 1;
+    if (dd >= c.rng + 7) continue;
+    if (!c.aoe && !((rx * e.fx + ry * e.fy) / dd > .2 || dd < 10)) continue;
+    hs.add(id);
+    if (o === P) hurtP(d, e); else sendTo(o.rid, { k: 'hit', d, ex: e.x, ey: e.y, pj: 0, en: e.nid || 0, ub: unbl(e) });
+  }
+}
 { const h = hurtP; hurtP = function (d, e) {
-  if (isHo() && P && P.rid !== undefined) { sendTo(P.rid, { k: 'hit', d, ex: e.x, ey: e.y, pj: e.proj ? 1 : 0, en: e.nid || 0 }); return; }
+  if (isHo() && P && P.rid !== undefined) { sendTo(P.rid, { k: 'hit', d, ex: e.x, ey: e.y, pj: e.proj ? 1 : 0, en: e.nid || 0, ub: unbl(e) }); return; }
   return h.apply(this, arguments);
 } }
 { const t = takeHit; takeHit = function (d, fx, fy) {
@@ -471,4 +507,7 @@ NET.begin = (mode, o) => { // crear/unirse desde el lobby global (el socket ya e
   return r;
 } }
 addEventListener('beforeunload', () => { try { if (NET.ws) NET.ws.close(); } catch (e) {} });
+// complementos que cargan antes que la red (caida.js, rey_fluido.js) dejan aquí su registro de mensajes
+(window.NET_PLUGINS || []).forEach(f => { try { f(NET); } catch (e) { console.error(e); } });
+window.NET_PLUGINS = { push: f => { try { f(NET); } catch (e) { console.error(e); } } };
 })();

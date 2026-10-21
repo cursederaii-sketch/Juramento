@@ -7,3 +7,5 @@ del soundfont FluidR3_GM (Frank Wen, licencia permisiva que permite distribuir e
 Efectos de sonido (sfxdata.js):
 - Kenney "RPG Audio" (kenney.nl) — licencia CC0 (dominio público): golpes, espadas, tela, puertas, monedas, metal, pasos.
 - Campanas, coro, timbales, arpa y platillos: renderizados con el mismo soundfont FluidR3_GM.
+
+Ambiente (ambiente.js): viento, agua, mar, abejas, pájaros, grillos, búho, gotas, gaviotas, cuervos y cristales se sintetizan en tiempo real con WebAudio; no usan archivos de terceros.

@@ -50,11 +50,17 @@ El Durable Object usa la API de WebSocket Hibernation. La pequeña información 
 
 Este despliegue no necesita un servidor dedicado, pero **no promete recursos ilimitados sin coste**. La documentación de Cloudflare consultada indica para Durable Objects en el plan Free 100.000 requests/día y 13.000 GB-s de duración/día; si se supera cualquiera de esos límites, las operaciones del tipo afectado pueden fallar hasta el reinicio diario de cuota. La documentación también explica que los mensajes WebSocket entrantes se contabilizan con una proporción 20:1 a efectos de facturación de requests (los mensajes salientes no se cobran como requests). Consulta siempre el plan vigente antes de publicar.
 
-El juego envía snapshots desde el anfitrión a 15 Hz (54.000 mensajes entrantes/hora ≈ 2.700 requests facturables/hora) mientras hay invitados conectados. Ajusté la transmisión del estado del invitado a 10 Hz para controlar el consumo (36.000 mensajes/hora por invitado ≈ 1.800 requests facturables/hora). Una sala completa de cuatro jugadores puede consumir aproximadamente 8.100 requests facturables/hora solo en esos dos flujos; la cuota de 100.000 requests/día equivale a unas 12 horas de actividad de esa sala por día, antes de contar chat, lobby, conexiones y otras partidas. Además, una sesión activa puede evitar que el Durable Object hiberne. El límite de 13.000 GB-s/día equivale a unas 28,9 horas de duración a 128 MB; si el objeto permanece activo 24 horas, consume alrededor de 10.800 GB-s/día. Este paquete está pensado como beta de bajo tráfico, no es una garantía de comunidad pública grande e ilimitada a coste cero. Vigila **Workers & Pages → Durable Objects → Usage** en Cloudflare y no actives el plan Workers Paid sin revisar primero el presupuesto.
+El juego solo envía lo que cambió (desde v8.53). Peor caso, combate continuo de una sala llena: el anfitrión envía snapshots a 15 Hz (54.000 mensajes entrantes/hora ≈ 2.700 requests facturables/hora) y cada invitado su estado a 10 Hz (36.000 mensajes/hora ≈ 1.800 requests/hora por invitado), unos 8.100 requests/hora para cuatro jugadores: igual que antes. Fuera de combate baja bastante:
+
+- **Anfitrión**: si no hay enemigos despiertos, proyectiles, rocas ni jefe, los snapshots bajan de 15 a 8 Hz. Si además no cambió nada (enemigos, muertes, proyectiles, posición o estado de los jugadores), no se envía nada salvo un latido por segundo (≈ 180 requests facturables/hora).
+- **Invitados**: el estado propio solo se envía si cambió (10 Hz como máximo mientras se mueven o actúan); quietos mandan un latido por segundo (≈ 180 requests/hora cada uno).
+- El estado compartido del mundo (`sh`) se reenvía como mucho cada 5 s si no cambió.
+
+Estos números son estimaciones a partir del código, no mediciones: el ahorro real depende de cuánto tiempo pasen los jugadores en combate. Con la cuota de 100.000 requests/día, una sala llena en combate continuo sigue durando unas 12 horas al día; con exploración tranquila rinde mucho más. Además, una sesión activa puede evitar que el Durable Object hiberne. El límite de 13.000 GB-s/día equivale a unas 28,9 horas de duración a 128 MB; si el objeto permanece activo 24 horas, consume alrededor de 10.800 GB-s/día. Este paquete está pensado como beta de bajo tráfico, no es una garantía de comunidad pública grande e ilimitada a coste cero. Vigila **Workers & Pages → Durable Objects → Usage** en Cloudflare y no actives el plan Workers Paid sin revisar primero el presupuesto.
 
 ## Límites funcionales heredados del juego
 
-La red existente sigue usando al anfitrión como autoridad de la simulación: el anfitrión ejecuta enemigos/jefes y los invitados replican snapshots. No se convirtió en un servidor dedicado autoritativo. Los límites listados en `MULTIJUGADOR.md` siguen aplicando (por ejemplo, la ruta entre regiones la guía el anfitrión y algunos peligros de escenario aún solo afectan al anfitrión).
+La red existente sigue usando al anfitrión como autoridad de la simulación: el anfitrión ejecuta enemigos/jefes y los invitados replican snapshots. No se convirtió en un servidor dedicado autoritativo. Los límites listados en `MULTIJUGADOR.md` siguen aplicando (por ejemplo, la ruta entre regiones la guía el anfitrión y el inicio de arenas/emboscadas lo decide el anfitrión).
 
 ## Probar localmente con el servidor Node anterior
 
@@ -76,3 +82,23 @@ Abre `http://localhost:8080`. El archivo `net.js` usará `http://localhost:8080`
 - **El Cauce Hundido (`cauce.js`, v8.28)**: región nueva de la ruta alternativa entre el Remanso y el Valle de la Corona. Sala de compuertas con dos palancas, hoguera, cámara secreta y mini-jefe (El Guardacauces). Se carga antes de `ruta_rio.js`.
 - **La Cisterna Real (`cisterna.js`, v8.29)**: segundo tramo de la ruta alternativa (Cauce Hundido → Cisterna → Valle de la Corona). Dos puzzles en serie: el coro del agua (memoria sonora, 3 rondas) y cuatro válvulas en orden. Se carga después de `puzzles_v2.js` y `cauce.js`, antes de `ruta_rio.js`.
 - **Preludio de los sueños (v8.30, dentro de `suenos_anim.js`)**: antes de cada sueño, ~6 s con el protagonista sentado frente a la hoguera (bebe del frasco, se le cierran los ojos, cabecea) que se disuelve en el sueño. Un toque salta el preludio; el siguiente cierra todo.
+
+## Cambios v8.53
+
+- **Peligros del escenario para todos**: fisuras del salón (`rey_fluido.js`) y grietas, cadenas, pozos, decretos, derrumbes y sentencia del cráter (`caida.js`) ahora se avisan a los invitados y cada uno los esquiva o sufre en su propio cliente. Los golpes de área y tajos anchos de los enemigos alcanzan a todos los jugadores dentro del radio (`net.js`, función `sweep`). Los ataques rojos del Rey tampoco se pueden parar en el invitado.
+- **Menos requests**: snapshots del anfitrión y estado de los invitados solo cuando hay cambios (ver arriba).
+
+## Cambios v8.54 — accesibilidad y modo foto (`accesibilidad.js`)
+
+- **Ajustes → Accesibilidad**: daltonismo (protanopia, deuteranopia, tritanopia; corrección aproximada por filtro de color, no clínica), tamaño del texto (100/125/150 %, en menús, diálogos y textos pequeños del juego) y avisos de ataque con forma (triángulo para ataques normales, rombo con X para los rojos, que no se pueden parar).
+- **Ajustes → Ayudas de dificultad** (opcionales y locales a cada jugador): daño recibido (100/75/50/25 %; las sentencias de un golpe no se tocan), recuperación de resistencia (×1, ×1,5, ×2) y tiempo de aviso de los enemigos (+25/+50 %, solo en solitario porque el anfitrión simula a los enemigos de todos).
+- **Pausa → Modo foto**: cámara libre (flechas/WASD, Shift para ir rápido, o arrastrar), ocultar interfaz (H) y personajes (J), captura PNG a 4× (C/Enter; en móvil abre el menú de compartir si está disponible). En cooperativo el mundo sigue en marcha mientras fotografías. La captura no incluye el filtro de daltonismo.
+- Ajustes guardados en `jur_cfg` (`cb`, `fsz`, `cues`, `adm`, `areg`, `awin`). `index.html` carga el módulo justo antes de `net.js`.
+
+## Cambios v8.55 — combate vivo (`combate_anim.js`)
+
+- **Capa solo visual** (no toca daño, IA, colisiones ni red; cada jugador la ve en su propio cliente). `index.html` la carga al final, después de `juice.js`.
+- **Jugador**: cada golpe tiene anticipación (se encoge y echa atrás), embestida con estiramiento e inclinación, y recuperación con rebote. Destello en la punta del arma antes del tajo, líneas de velocidad, polvo y empujón de cámara. Los ligeros alternan el giro del torso; el pesado levanta una onda de polvo delante. También reaccionan la esquiva, el golpe recibido, la guardia y el andar/correr.
+- **Enemigos**: se encogen al preparar, embisten al golpear y vuelven con rebote; se tambalean aturdidos, vibran al ser golpeados, se balancean en guardia y al morir salen despedidos con un salto corto. Pisotón con polvo y anillo en jefes y brutos.
+- **Ajustes → Pantalla → Animación de combate**: Desactivada / Normal / Intensa (`cvivo` en `jur_cfg`). Respeta *Sacudida de cámara* y la calidad gráfica automática.
+- Los golpes encadenados (cancelaciones de `combate_fluido.js`) ahora también disparan polvo, líneas y empujón en cada golpe.

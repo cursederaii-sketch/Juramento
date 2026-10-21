@@ -18,7 +18,7 @@ function dBes(){let h='<h2>Bestiario</h2>';for(const k in BEST){const b=BEST[k],
   h+='<div class="ent"><b>'+b[0]+(e.k?' · derrotado '+e.k+'×':'')+'</b><span>'+b[1]+'</span>'+(e.k>=1?'<span style="margin-top:4px;color:#9a8bc5">'+b[2]+'</span>':'')+(e.k>=3||(BS[k]&&e.k>=1)?'<span style="margin-top:4px;color:#7dff9a">Consejo: '+b[3]+'</span>':'')+'</div>'}return h}
 function dAch(){const n=Object.keys(S.ach).length;return '<h2>Logros · '+n+'/'+ACH.length+'</h2>'+ACH.map(a=>S.ach[a[0]]?'<div class="ent ok"><b>'+a[1]+'</b><span>'+a[2]+'</span></div>':'<div class="ent lock"><b>'+a[1]+'</b><span>'+a[2]+'</span></div>').join('')}
 // ===== MAPA GENERAL "EL REINO": regiones colocadas como en el plano, con niebla, caminos y marcadores =====
-const KR=4,OY=34,MW=748,MH=2158;
+const KR=4,OY=34,MW=748,MH=2860;
 const LAY={cripta:[30,OY],osario:[356,OY],valdora:[0,OY+208],bosque:[292,OY+212],fosa:[566,OY+244],archivos:[4,OY+430],puertas:[232,OY+424],trono:[508,OY+438],marisma:[14,OY+646],cantera:[262,OY+646],torre:[512,OY+646]};
 const LNK=[['cripta','valdora'],['valdora','bosque'],['bosque','puertas'],['puertas','trono'],['cripta','osario',1],['bosque','fosa',1],['valdora','archivos',1],['bosque','marisma',1],['valdora','cantera',1],['puertas','torre',1]];
 const NUMR={cripta:1,valdora:2,bosque:3,puertas:4,trono:5};

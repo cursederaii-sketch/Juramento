@@ -3,8 +3,11 @@
 (()=>{
 const old=sfx,B={};let started=0,decoded=0;
 const ctx=()=>{AC=AC||new(window.AudioContext||window.webkitAudioContext)();return AC};
-function decode(){if(decoded)return;decoded=1;try{const c=ctx();for(const k in SFXB){const t=atob(SFXB[k]),u=new Uint8Array(t.length);for(let i=0;i<t.length;i++)u[i]=t.charCodeAt(i);
- const p=c.decodeAudioData(u.buffer,x=>{B[k]=x},()=>{});if(p&&p.catch)p.catch(()=>{})}}catch(e){}}
+// decodificación escalonada: antes los 39 efectos se decodificaban de golpe en el primer toque (tirón de ~100 ms en móvil); ahora en porciones de ≤5 ms
+function decode(){if(decoded)return;decoded=1;try{const c=ctx(),ks=Object.keys(SFXB);let n=0;
+ const one=()=>{const t0=performance.now();while(n<ks.length&&performance.now()-t0<5){const k=ks[n++];try{const t=atob(SFXB[k]),u=new Uint8Array(t.length);for(let i=0;i<t.length;i++)u[i]=t.charCodeAt(i);
+  const p=c.decodeAudioData(u.buffer,x=>{B[k]=x},()=>{});if(p&&p.catch)p.catch(()=>{})}catch(e){}}
+  if(n<ks.length)setTimeout(one,12)};one()}catch(e){}}
 // qué sonido real corresponde a cada llamada antigua (frecuencia, duración, onda, volumen, frecuencia final)
 function kind(f,d,t,v,f2){
  const up=f2&&f2>f*1.1,dn=f2&&f2<f*.9;

@@ -8,7 +8,7 @@ const _weapon=weapon;weapon=function(k,ox,oy,a,len,o){if(AN.cap&&k!=='bow'){cons
 // --- desplazamientos de cuerpo ---
 function pOff(p){let dx=0,dy=0;const w=WPN(),A=p.s==='light'?w.l.a:p.s==='heavy'?w.h.a:null,m=Math.hypot(p.ax,p.ay)||1,ux=p.ax/m,uy=p.ay/m;
  if(A){const t=p.t,hv=p.s==='heavy',amp=hv?4:3;let k;if(t<A[0])k=-.7*(t/A[0]);else if(t<=A[1])k=1;else k=Math.max(0,1-(t-A[1])/.18);dx=ux*amp*k;dy=uy*amp*k*.6+(t<A[0]&&hv?1:0)}
- else if(p.s==='idle'){if(p.mvg)dy=-Math.abs(Math.sin(TM*9))*1.6;else{dy=Math.sin(TM*2.2)>.4?-1:0;if(held.block&&p.ex<=0)dy=1}}
+ else if(p.s==='idle'){if(p.mvg)dy=p.run?-Math.abs(Math.sin(TM*14))*2.6:-Math.abs(Math.sin(TM*9))*1.6;else{dy=Math.sin(TM*2.2)>.4?-1:0;if(held.block&&p.ex<=0)dy=1}}
  else if(p.s==='hit')dx=Math.sin(p.t*60)*1.5;
  else if(p.s==='flask')dy=-Math.sin(p.t*14);
  return{dx:Math.round(dx),dy:Math.round(dy)}}

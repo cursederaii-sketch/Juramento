@@ -2,9 +2,9 @@
 const $=id=>document.getElementById(id),cv=$('cv'),g=cv.getContext('2d',{alpha:false});g.imageSmoothingEnabled=false;
 const R=Math.random,cl=(v,a,b)=>Math.max(a,Math.min(b,v)),sgn=v=>v<0?-1:1,hash=k=>{const h=Math.sin(k*12.9898)*43758.5453;return h-Math.floor(h)};
 // ---- ajustes (se editan en inicio.js) ----
-const KEYD={up:['w','arrowup'],down:['s','arrowdown'],left:['a','arrowleft'],right:['d','arrowright'],light:['j'],heavy:['k'],dodge:['l',' '],block:['shift','i'],flask:['f'],act:['e']};
+const KEYD={up:['w','arrowup'],down:['s','arrowdown'],left:['a','arrowleft'],right:['d','arrowright'],light:['j'],heavy:['k'],dodge:['l',' '],block:['q','i'],run:['shift'],flask:['f'],act:['e']};
 const CFGD={master:80,sfx:100,music:70,shake:1,vib:1,touch:'auto',tsize:1,topac:100,lefty:0,crt:0,smooth:0,fps:0,hints:1,text:1,mini:1,dmg:1,keys:KEYD};
-const CFG=(()=>{try{const s=JSON.parse(localStorage.getItem('jur_cfg')||'{}');return Object.assign({},CFGD,s,{keys:Object.assign({},KEYD,s.keys||{})})}catch(e){return Object.assign({},CFGD,{keys:Object.assign({},KEYD)})}})();
+const CFG=(()=>{try{const s=JSON.parse(localStorage.getItem('jur_cfg')||'{}');const c=Object.assign({},CFGD,s,{keys:Object.assign({},KEYD,s.keys||{})});if(!c.kv2){c.keys.block=['q','i'];c.keys.run=['shift'];c.kv2=1}return c}catch(e){return Object.assign({},CFGD,{keys:Object.assign({},KEYD)})}})();
 const saveCfg=()=>{try{localStorage.setItem('jur_cfg',JSON.stringify(CFG))}catch(e){}};
 const buzz=ms=>{if(CFG.vib&&navigator.vibrate)try{navigator.vibrate(ms)}catch(e){}};
 // ---- entrada ----
@@ -129,8 +129,9 @@ function updP(dt){const p=P,w=WPN(),L=w.l,H=w.h;p.t+=dt;p.clk=(p.clk||0)+dt;if(p
   else if(buf.heavy>0&&p.st>=H.c*.5){spend(H.c*1.25);p.cn=0;p.s='heavy';p.t=0;p.hd=false;aim();buf.heavy=0}
   else if(buf.light>0&&p.st>=L.c*.6){p.cn=(p.clk-(p.lastAtk||-9)<.6)?Math.min(3,(p.cn||0)+1):0;p.lastAtk=p.clk;spend(L.c*1.6*(1+.45*p.cn));if(p.cn>=2)ftext(p.x,p.y-30,'cansado','#ffb060');p.s='light';p.t=0;p.hd=false;aim();buf.light=0}
   else if(buf.flask>0&&S.flasks>0){buf.flask=0;if(S.oath==='guardian'&&G.bossOn)toast('El Guardián no puede curarse');else{p.s='flask';p.t=0;p.hd=false}}}
- let vx=0,vy=0;
- if(p.s==='idle'){if(mag>.05){const sp=68*(blk?.45:1)*(p.ex>0?.4:1);vx=v.x*sp;vy=v.y*sp;
+ let vx=0,vy=0;p.run=0;
+ if(p.s==='idle'){if(mag>.05){if(p.st>30)p.rx=0;if(!blk&&p.ex<=0&&mag>.3&&!p.rx&&!G.noRun&&(held.run||(window.RUNT&&(RUNT.on||RUNT.gp)))){p.run=1;p.st-=16*dt;p.sd=Math.max(p.sd,.45);if(p.st<=6){p.st=6;p.rx=1;p.run=0}}
+   const sp=68*(blk?.45:1)*(p.ex>0?.4:1)*(p.run?1.5:1);vx=v.x*sp;vy=v.y*sp;
    if(!blk){if(Math.abs(v.x)>Math.abs(v.y)*1.2){p.fx=sgn(v.x);p.fy=0}else if(Math.abs(v.y)>Math.abs(v.x)*1.2){p.fy=sgn(v.y);p.fx=0}else if(!p.fx&&!p.fy){p.fx=sgn(v.x)}else if(p.fx)p.fx=sgn(v.x);else p.fy=sgn(v.y)}
    else{p.ax=p.fx;p.ay=p.fy}}
   p.mvg=mag>.05?1:0}
